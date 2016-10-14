@@ -74,8 +74,7 @@ public class DepthFirstVisitor implements Visitor {
     */
    public void visit(MainClass n) {
       n.f0.accept(this);
-      n.f1.accept(this);
-      System.out.println( n.f1.f0.toString());
+      n.f1.accept(this);        
       n.f2.accept(this);
       n.f3.accept(this);
       n.f4.accept(this);

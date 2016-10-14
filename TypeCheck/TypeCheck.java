@@ -14,11 +14,12 @@ public class TypeCheck {
 		// TODO Auto-generated method stub
 		System.out.println("GOOD!");
 		
-		MiniJavaParser parser=new MiniJavaParser(new java.io.FileInputStream("Factorial.java"));
-		Node root = parser.Goal();
+		new MiniJavaParser(new java.io.FileInputStream(args[0]));
+		Node root = MiniJavaParser.Goal();
 		System.out.println("GOOD!");
-		DepthFirstVisitor visitor=new DepthFirstVisitor();
-		root.accept(visitor);
+		GJVisitor<VariableType,SymbolInterface> visitor=new BuildSymbolTableVisitor();
+		SymbolTable fullSymbolTable=new SymbolTable();
+		root.accept(visitor,fullSymbolTable);
 		
 		System.out.println("GOOD!");
 
