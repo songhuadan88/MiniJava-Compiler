@@ -1,5 +1,4 @@
 import java.io.FileNotFoundException;
-
 import syntaxtree.*;
 import visitor.*;
 
@@ -23,7 +22,7 @@ public class TypeCheck {
 		if(visitor1.hasError)
 			System.out.println(visitor1.errorInfo);
 		else
-			System.out.println("No error found!");
+			System.out.println("No error found!\n");
 
 	}
 

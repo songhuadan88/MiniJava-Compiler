@@ -7,5 +7,5 @@ FILES=../Programs/*.java
 for f in $FILES
 do
     echo "Processing $f file..."
-    java TypeCheck $f
+    java TypeCheck $f 
 done

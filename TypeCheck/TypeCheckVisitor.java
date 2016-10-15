@@ -48,6 +48,7 @@ public class TypeCheckVisitor extends GJDepthFirst<VariableType ,SymbolInterface
 	boolean hasError=false;
 	String errorInfo="";
 	
+	
 	   private void AddError(String error) {
 		 hasError=true;
 		 errorInfo=errorInfo+error+"\n";
@@ -331,6 +332,15 @@ public class TypeCheckVisitor extends GJDepthFirst<VariableType ,SymbolInterface
 	   public VariableType visit(AssignmentStatement n, SymbolInterface argu) {
 	      VariableType _ret=null;
 	      n.f0.accept(this, argu);
+	      FunctionItem functionItem=(FunctionItem)argu;
+	      VariableItem variableItem= functionItem.SearchVariable(n.f0.f0.toString());
+    	  if(variableItem==null)
+    	  {
+	    	  ClassItem classItem=functionItem.parentClass;
+	    	  variableItem=classItem.SearchVariable(n.f0.f0.toString());
+	    	  if(variableItem==null)	    		
+	    		  AddError("Undefined variable at line "+n.f0.f0.beginLine);
+    	  }
 	      n.f1.accept(this, argu);
 	      n.f2.accept(this, argu);
 	      n.f3.accept(this, argu);
@@ -489,9 +499,11 @@ public class TypeCheckVisitor extends GJDepthFirst<VariableType ,SymbolInterface
 	    */
 	   public VariableType visit(TimesExpression n, SymbolInterface argu) {
 	      VariableType _ret=null;
-	      n.f0.accept(this, argu);
+	      VariableType type1=n.f0.accept(this, argu);
 	      n.f1.accept(this, argu);
-	      n.f2.accept(this, argu);
+	      VariableType type2=n.f2.accept(this, argu);
+	      if(type1.type!=FourType.Integer || type2.type!=FourType.Integer)
+	    	  AddError("variable types do not match around * at line "+n.f1.beginLine);
 	      return new VariableType(FourType.Integer);
 	   }
 
@@ -503,10 +515,12 @@ public class TypeCheckVisitor extends GJDepthFirst<VariableType ,SymbolInterface
 	    */
 	   public VariableType visit(ArrayLookup n, SymbolInterface argu) {
 	      VariableType _ret=null;
-	      n.f0.accept(this, argu);
+	      VariableType type=n.f0.accept(this, argu);
 	      n.f1.accept(this, argu);
 	      n.f2.accept(this, argu);
 	      n.f3.accept(this, argu);
+	      if(type.type!=FourType.IntegerArray)
+	    	  AddError("operator [] only matches with int[] at line "+n.f1.beginLine);
 	      return new VariableType(FourType.Integer);
 	   }
 
@@ -536,11 +550,16 @@ public class TypeCheckVisitor extends GJDepthFirst<VariableType ,SymbolInterface
 	      VariableType variableType= n.f0.accept(this, argu);
 	      n.f1.accept(this, argu);
 	      n.f2.accept(this, argu);
+	      if(variableType.type==FourType.Unknown)
+	    	  return variableType;
 	      ClassItem classItem = ((FunctionItem)argu).parentClass.parentTable.SearchClass(variableType.name);
-	      FunctionItem functionItem = classItem.SearchFunction(n.f2.f0.toString());	      
+	      FunctionItem functionItem = classItem.SearchFunction(n.f2.f0.toString());
+	      FunctionParameter functionParameter=new FunctionParameter((FunctionItem)argu);
 	      n.f3.accept(this, argu);
-	      n.f4.accept(this, argu);
+	      n.f4.accept(this, functionParameter);
 	      n.f5.accept(this, argu);
+	      if(functionParameter.numberOfParameter != functionItem.parameterType.size())
+	    	  AddError("number of parameters do not match at line "+n.f3.beginLine);
 	      return functionItem.retType;
 	   }
 
@@ -550,7 +569,9 @@ public class TypeCheckVisitor extends GJDepthFirst<VariableType ,SymbolInterface
 	    */
 	   public VariableType visit(ExpressionList n, SymbolInterface argu) {
 	      VariableType _ret=null;
-	      n.f0.accept(this, argu);
+	      FunctionParameter functionParameter=(FunctionParameter)argu;
+	      functionParameter.numberOfParameter++;
+	      n.f0.accept(this, functionParameter.originItem);
 	      n.f1.accept(this, argu);
 	      return _ret;
 	   }
@@ -561,8 +582,10 @@ public class TypeCheckVisitor extends GJDepthFirst<VariableType ,SymbolInterface
 	    */
 	   public VariableType visit(ExpressionRest n, SymbolInterface argu) {
 	      VariableType _ret=null;
+	      FunctionParameter functionParameter=(FunctionParameter)argu;
+	      functionParameter.numberOfParameter++;
 	      n.f0.accept(this, argu);
-	      n.f1.accept(this, argu);
+	      n.f1.accept(this, functionParameter.originItem);
 	      return _ret;
 	   }
 
@@ -592,6 +615,7 @@ public class TypeCheckVisitor extends GJDepthFirst<VariableType ,SymbolInterface
 	    	  if(variableItem!=null)
 	    		  return variableItem.type;
 	    	  AddError("Undefined variable at line "+identifier.f0.beginLine);
+	    	  return new VariableType(FourType.Unknown);
 	    	}
 	      return _ret;
 	   }
@@ -693,9 +717,28 @@ public class TypeCheckVisitor extends GJDepthFirst<VariableType ,SymbolInterface
 	   public VariableType visit(BracketExpression n, SymbolInterface argu) {
 	      VariableType _ret=null;
 	      n.f0.accept(this, argu);
-	      n.f1.accept(this, argu);
-	      _ret = n.f2.accept(this, argu);
+	      _ret = n.f1.accept(this, argu);
+	      n.f2.accept(this, argu);
 	      return _ret;
 	   }
 
 }
+
+
+class FunctionParameter implements SymbolInterface
+{
+	int numberOfParameter=0;
+	FunctionItem originItem;
+
+	FunctionParameter(FunctionItem _originItem)
+	{
+		originItem=_originItem;
+	}
+
+	public void addVariable(VariableItem variableItem) {
+		// no need to implement
+		
+	}
+	
+}
+

@@ -83,6 +83,12 @@ class ClassItem implements SymbolInterface
 				return function;
 		}
 		
+		if(hasParent)
+		{
+			ClassItem parentClass=parentTable.SearchClass(parentName);
+			return parentClass.SearchFunction(functionName);
+		}
+		
 		return null;
 	}
 
@@ -93,6 +99,13 @@ class ClassItem implements SymbolInterface
 			if(variable.name==variableName)
 				return variable;
 		}
+		
+		if(hasParent)
+		{
+			ClassItem parentClass=parentTable.SearchClass(parentName);
+			return parentClass.SearchVariable(variableName);
+		}
+		
 		return null;
 	}
 
@@ -127,7 +140,7 @@ class FunctionItem implements SymbolInterface
 	String name;
 	VariableType retType;
 	List<VariableItem> variableItem=new ArrayList<VariableItem>();
-	List<VariableType> parameterType=new ArrayList<VariableType>();
+	List<VariableType> parameterType=new ArrayList<VariableType>();	
 	
 	public FunctionItem(){}
 	
