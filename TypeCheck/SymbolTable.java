@@ -13,27 +13,43 @@ public class SymbolTable implements SymbolInterface {
 	public void addMainClass(MainClassItem classItem) {
 		// TODO Auto-generated method stub
 		mainClassItem=classItem;
+		classItem.parentTable=this;
 	}
 
 	public void addClass(ClassItem _classItem) {
 		// TODO Auto-generated method stub
 		classItem.add(_classItem);
+		_classItem.parentTable=this;
 	}
 
 	public void addVariable(VariableItem variableItem) {
 		// no need to implement
 		
 	}
+	
+	public ClassItem SearchClass(String className) {
+		// TODO Auto-generated method stub
+		for(ClassItem classitem : classItem)
+		{
+			if(classitem.name==className)
+				return classitem;
+		}
+		return null;
+	}
+	
 
 }
 
 class ClassItem implements SymbolInterface
 {
+	SymbolTable parentTable=null;
 	String name;
 	boolean hasParent;
 	String parentName;
 	List<FunctionItem> functionItem=new ArrayList<FunctionItem>();
 	List<VariableItem> variableItem=new ArrayList<VariableItem>();
+	
+	public ClassItem(){}
 	
 	public ClassItem(String _name) {
 		// TODO Auto-generated constructor stub
@@ -51,16 +67,39 @@ class ClassItem implements SymbolInterface
 	public void addFunction(FunctionItem _functionItem) {
 		// TODO Auto-generated method stub
 		functionItem.add(_functionItem);
+		_functionItem.parentClass=this;
 	}
 
 	public void addVariable(VariableItem _variableItem) {
 		// TODO Auto-generated method stub
 		variableItem.add(_variableItem);
 	}
+
+	public FunctionItem SearchFunction(String functionName) {
+		// TODO Auto-generated method stub
+		for(FunctionItem function : functionItem)
+		{
+			if(function.name==functionName)
+				return function;
+		}
+		
+		return null;
+	}
+
+	public VariableItem SearchVariable(String variableName) {
+		// TODO Auto-generated method stub
+		for(VariableItem variable : variableItem)
+		{
+			if(variable.name==variableName)
+				return variable;
+		}
+		return null;
+	}
+
 	
 }
 
-class MainClassItem implements SymbolInterface
+class MainClassItem extends ClassItem
 {
 	String name;
 	MainFunctionItem functionItem;
@@ -72,10 +111,11 @@ class MainClassItem implements SymbolInterface
 	public void addMainFunction(MainFunctionItem _functionItem) {
 		// TODO Auto-generated method stub
 		functionItem=_functionItem;
+		_functionItem.parentClass=this;
 	}
 
 	public void addVariable(VariableItem variableItem) {
-		// TODO Auto-generated method stub
+		// no need to implement
 		
 	}
 	
@@ -83,10 +123,14 @@ class MainClassItem implements SymbolInterface
 
 class FunctionItem implements SymbolInterface
 {
+	ClassItem parentClass;
 	String name;
 	VariableType retType;
 	List<VariableItem> variableItem=new ArrayList<VariableItem>();
 	List<VariableType> parameterType=new ArrayList<VariableType>();
+	
+	public FunctionItem(){}
+	
 	public FunctionItem(String _name, VariableType _retType) {
 		// TODO Auto-generated constructor stub
 		name=_name;
@@ -104,16 +148,26 @@ class FunctionItem implements SymbolInterface
 		VariableItem _variableItem=new VariableItem(_type,_name);		
 		variableItem.add(_variableItem);
 	}
+
+	public VariableItem SearchVariable(String variableName) {
+		// TODO Auto-generated method stub
+		for(VariableItem variable : variableItem)
+		{
+			if(variable.name==variableName)
+				return variable;
+		}
+		return null;
+	}
 	
 }
 
-class MainFunctionItem implements SymbolInterface
+class MainFunctionItem extends FunctionItem
 {
 	String parameterName;
 	List<VariableItem> variableItem=new ArrayList<VariableItem>();
 
 	public MainFunctionItem(String _name) {
-		// TODO Auto-generated constructor stub
+		// TODO Auto-generated constructor stub		
 		parameterName=_name;
 	}
 
@@ -152,6 +206,25 @@ class VariableType
 	{
 		type=_type;
 		name=_name;
+	}
+
+	// check whether an instance of type1 is an instance of type 2
+	public static boolean IsA(VariableType type1, VariableType type2, SymbolTable symbolTable) {
+		// TODO Auto-generated method stub
+		if(type1.type==FourType.Boolean || type1.type==FourType.Integer || type1.type==FourType.IntegerArray)
+			return type1.type==type2.type;
+		if(type1.type==FourType.Object)
+		{
+			if(type2.type!=FourType.Object)
+				return false;
+			if(type1.name==type2.name)
+				return true;
+			ClassItem classItem=symbolTable.SearchClass(type1.name);
+			if(classItem==null)
+				return false;
+			return IsA(new VariableType(FourType.Object,classItem.parentName),type2,symbolTable);
+		}
+		return false;
 	}	
 }
 
