@@ -9,3 +9,5 @@ do
     echo "Processing $f file..."
     java TypeCheck $f 
 done
+
+java -jar pgi.jar < Factorial_Sample/Factorial.pg 
