@@ -1,0 +1,16 @@
+Grammar on MiniJava:
+There is only one function in the MainClass.
+There are only four types, int bool int[] Object, except the main function.
+
+Type errors to detect:
+Wrong returned type. Binary-tree, Linked-list
+Undefined variable. Bubble-sort 76, Tree-visitor 339
+[] only matches with Array. Line-search 37, Quicksort 42
+Left type and right type of * does not match, Factorial 13
+Number of parameters of method doea not match. Morethan4
+
+Piglet:
+If a class has n variables, then it should allocate 4n+4 bytes.
+The first 4 bytes are used to store the list of functions, and others are used to store variables.
+TEMP 1-20 is used to be the varaibles of functions.
+TEMP is considered local variable inside a function.
