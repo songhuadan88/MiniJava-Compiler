@@ -10,4 +10,7 @@ do
     java TypeCheck $f 
 done
 
+cd ..
+java -jar typecheck.jar Factorial_Sample/Factorial.java
+
 java -jar pgi.jar < Factorial_Sample/Factorial.pg 
