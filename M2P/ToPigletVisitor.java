@@ -1,4 +1,6 @@
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import syntaxtree.AllocationExpression;
 import syntaxtree.AndExpression;
@@ -48,8 +50,14 @@ import visitor.GJDepthFirst;
 public class ToPigletVisitor extends GJDepthFirst<Object,SymbolInterface>{
 	
 	int currentTemp=20;
+	int currentLabel=1;
 	int currentTab=0;
 	String pigletString="";
+	
+	int newLabel()
+	{
+		return currentLabel++;
+	}
 	
 	int newTemp()
 	{
@@ -196,10 +204,16 @@ public class ToPigletVisitor extends GJDepthFirst<Object,SymbolInterface>{
 	    * f2 -> ";"
 	    */
 	   public Object visit(VarDeclaration n, SymbolInterface argu) {
-	      Object _ret=null;
+	      Object _ret=null;	      
 	      n.f0.accept(this, argu);
 	      n.f1.accept(this, argu);
 	      n.f2.accept(this, argu);
+	      if(argu instanceof FunctionItem)
+	      {
+	    	  FunctionItem function=(FunctionItem)argu;
+	    	  VariableItem variable=function.SearchVariable(n.f1.f0.toString());
+	    	  variable.indexOfTemp=newTemp();
+	      }
 	      return _ret;
 	   }
 
@@ -226,7 +240,7 @@ public class ToPigletVisitor extends GJDepthFirst<Object,SymbolInterface>{
 	      n.f1.accept(this, argu);
 	      n.f2.accept(this, argu);
 	      FunctionItem function=classitem.SearchFunction(n.f2.f0.toString());
-	      appendInNewLine(classitem.name+"_"+function.name+" [ "+function.parameterType.size()+" ] ");
+	      appendInNewLine(classitem.name+"_"+function.name+" [ "+(function.parameterType.size()+1)+" ] ");
 	      currentTab++;
 	      appendInNewLine("BEGIN");
 	      currentTab++;
@@ -237,7 +251,7 @@ public class ToPigletVisitor extends GJDepthFirst<Object,SymbolInterface>{
 	      n.f7.accept(this, function);
 	      n.f8.accept(this, function);
 	      n.f9.accept(this, argu);
-	      int retIndex = (Integer)(n.f10.accept(this, function));
+	      int retIndex = (Integer)(((List<Object>)n.f10.accept(this, function)).get(0));
 	      currentTab--;
 	      appendInNewLine("RETURN TEMP "+retIndex);	      
 	      appendInNewLine("END");
@@ -360,8 +374,11 @@ public class ToPigletVisitor extends GJDepthFirst<Object,SymbolInterface>{
 	      Object _ret=null;
 	      n.f0.accept(this, argu);
 	      n.f1.accept(this, argu);
-	      n.f2.accept(this, argu);
+	      List<Object> _retList=(List<Object>) n.f2.accept(this, argu);
 	      n.f3.accept(this, argu);
+	      FunctionItem function=(FunctionItem)argu;
+    	  VariableItem variable=function.SearchVariable(n.f0.f0.toString());
+    	  appendInNewLine(String.format("MOVE TEMP %1d TEMP %2d",variable.indexOfTemp,(Integer)_retList.get(0)));
 	      return _ret;
 	   }
 
@@ -397,13 +414,20 @@ public class ToPigletVisitor extends GJDepthFirst<Object,SymbolInterface>{
 	    */
 	   public Object visit(IfStatement n, SymbolInterface argu) {
 	      Object _ret=null;
+	      int label1=newLabel();
+	      int label2=newLabel();
 	      n.f0.accept(this, argu);
 	      n.f1.accept(this, argu);
-	      n.f2.accept(this, argu);
+	      int tempIndex = (Integer)((List<Object>)n.f2.accept(this, argu)).get(0);
 	      n.f3.accept(this, argu);
+	      appendInNewLine("CJUMP TEMP "+tempIndex+" L"+label1);
 	      n.f4.accept(this, argu);
+	      appendInNewLine("JUMP L"+label2);
+	      appendInNewLine("L"+label1+" NOOP");
 	      n.f5.accept(this, argu);
+	      
 	      n.f6.accept(this, argu);
+	      appendInNewLine("L"+label2+" NOOP");
 	      return _ret;
 	   }
 
@@ -435,7 +459,8 @@ public class ToPigletVisitor extends GJDepthFirst<Object,SymbolInterface>{
 	      Object _ret=null;
 	      n.f0.accept(this, argu);
 	      n.f1.accept(this, argu);
-	      n.f2.accept(this, argu);
+	      int tempIndex =(Integer)((List<Object>)n.f2.accept(this, argu)).get(0);
+	      appendInNewLine("PRINT TEMP "+tempIndex);
 	      n.f3.accept(this, argu);
 	      n.f4.accept(this, argu);
 	      return _ret;
@@ -454,7 +479,7 @@ public class ToPigletVisitor extends GJDepthFirst<Object,SymbolInterface>{
 	    */
 	   public Object visit(Expression n, SymbolInterface argu) {
 	      Object _ret=null;
-	      n.f0.accept(this, argu);
+	      _ret = n.f0.accept(this, argu);	      
 	      return _ret;
 	   }
 
@@ -468,7 +493,7 @@ public class ToPigletVisitor extends GJDepthFirst<Object,SymbolInterface>{
 	      n.f0.accept(this, argu);
 	      n.f1.accept(this, argu);
 	      n.f2.accept(this, argu);
-	      return _ret;
+	      return 250;
 	   }
 
 	   /**
@@ -477,10 +502,14 @@ public class ToPigletVisitor extends GJDepthFirst<Object,SymbolInterface>{
 	    * f2 -> PrimaryExpression()
 	    */
 	   public Object visit(CompareExpression n, SymbolInterface argu) {
-	      Object _ret=null;
-	      n.f0.accept(this, argu);
+		   List<Object> _ret=new ArrayList<Object>();	
+		   int tempIndex1=(Integer)(((List<Object>)n.f0.accept(this, argu)).get(0));
 	      n.f1.accept(this, argu);
-	      n.f2.accept(this, argu);
+	      int tempIndex2=(Integer)(((List<Object>)n.f2.accept(this, argu)).get(0));
+	      int tempIndex=newTemp();
+	      appendInNewLine(String.format("MOVE TEMP %1d LT TEMP %2d TEMP %3d", tempIndex,tempIndex1,tempIndex2));
+	      _ret.add(tempIndex);
+	      _ret.add(new VariableType(FourType.Boolean));
 	      return _ret;
 	   }
 
@@ -494,7 +523,7 @@ public class ToPigletVisitor extends GJDepthFirst<Object,SymbolInterface>{
 	      n.f0.accept(this, argu);
 	      n.f1.accept(this, argu);
 	      n.f2.accept(this, argu);
-	      return _ret;
+	      return 250;
 	   }
 
 	   /**
@@ -503,10 +532,14 @@ public class ToPigletVisitor extends GJDepthFirst<Object,SymbolInterface>{
 	    * f2 -> PrimaryExpression()
 	    */
 	   public Object visit(MinusExpression n, SymbolInterface argu) {
-	      Object _ret=null;
-	      n.f0.accept(this, argu);
+		   List<Object> _ret=new ArrayList<Object>();		   
+	      int tempIndex1=(Integer)(((List<Object>)n.f0.accept(this, argu)).get(0));
 	      n.f1.accept(this, argu);
-	      n.f2.accept(this, argu);
+	      int tempIndex2=(Integer)(((List<Object>)n.f2.accept(this, argu)).get(0));
+	      int tempIndex=newTemp();
+	      appendInNewLine(String.format("MOVE TEMP %1d MINUS TEMP %2d TEMP %3d", tempIndex,tempIndex1,tempIndex2));
+	      _ret.add(tempIndex);
+	      _ret.add(new VariableType(FourType.Integer));
 	      return _ret;
 	   }
 
@@ -516,11 +549,15 @@ public class ToPigletVisitor extends GJDepthFirst<Object,SymbolInterface>{
 	    * f2 -> PrimaryExpression()
 	    */
 	   public Object visit(TimesExpression n, SymbolInterface argu) {
-	      Object _ret=null;
-	      n.f0.accept(this, argu);
-	      n.f1.accept(this, argu);
-	      n.f2.accept(this, argu);
-	      return _ret;
+		   List<Object> _ret=new ArrayList<Object>();		   
+		      int tempIndex1=(Integer)(((List<Object>)n.f0.accept(this, argu)).get(0));
+		      n.f1.accept(this, argu);
+		      int tempIndex2=(Integer)(((List<Object>)n.f2.accept(this, argu)).get(0));
+		      int tempIndex=newTemp();
+		      appendInNewLine(String.format("MOVE TEMP %1d TIMES TEMP %2d TEMP %3d", tempIndex,tempIndex1,tempIndex2));
+		      _ret.add(tempIndex);
+		      _ret.add(new VariableType(FourType.Integer));
+		      return _ret;
 	   }
 
 	   /**
@@ -535,7 +572,7 @@ public class ToPigletVisitor extends GJDepthFirst<Object,SymbolInterface>{
 	      n.f1.accept(this, argu);
 	      n.f2.accept(this, argu);
 	      n.f3.accept(this, argu);
-	      return _ret;
+	      return 250;
 	   }
 
 	   /**
@@ -548,7 +585,7 @@ public class ToPigletVisitor extends GJDepthFirst<Object,SymbolInterface>{
 	      n.f0.accept(this, argu);
 	      n.f1.accept(this, argu);
 	      n.f2.accept(this, argu);
-	      return _ret;
+	      return 250;
 	   }
 
 	   /**
@@ -560,13 +597,28 @@ public class ToPigletVisitor extends GJDepthFirst<Object,SymbolInterface>{
 	    * f5 -> ")"
 	    */
 	   public Object visit(MessageSend n, SymbolInterface argu) {
-	      Object _ret=null;
-	      n.f0.accept(this, argu);
+		   List<Object> _ret=new ArrayList<Object>();
+	      int tempIndex=newTemp();
+	      int tempFunctionIndex1=newTemp();
+	      int tempFunctionIndex2=newTemp();
+	      List<Object> pExp=(List<Object>)n.f0.accept(this, argu);
+	      int tempIndexExp=(Integer)(pExp.get(0));
+	      VariableType typeExp=(VariableType)(pExp.get(1));
+	      ClassItem classItem=((FunctionItem)argu).parentClass.parentTable.SearchClass(typeExp.name);
+	      FunctionItem functionItem=classItem.SearchFunction(n.f2.f0.toString());
+	   
+	      appendInNewLine(String.format("HLOAD TEMP %1d TEMP %2d 0",tempFunctionIndex1,tempIndexExp));
+	      appendInNewLine(String.format("HLOAD TEMP %1d TEMP %2d %3d",tempFunctionIndex2,tempFunctionIndex1,4*functionItem.indexInParent));
 	      n.f1.accept(this, argu);
 	      n.f2.accept(this, argu);
 	      n.f3.accept(this, argu);
-	      n.f4.accept(this, argu);
+	      String parameterString = (String)n.f4.accept(this, argu);
+	      if(parameterString==null)
+	    	  parameterString="";
 	      n.f5.accept(this, argu);
+	      appendInNewLine(String.format("MOVE TEMP %1d CALL TEMP %2d (TEMP %3d%4s)",tempIndex,tempFunctionIndex2,tempIndexExp,parameterString)); 
+	      _ret.add(tempIndex);
+	      _ret.add(functionItem.retType);
 	      return _ret;
 	   }
 
@@ -574,22 +626,24 @@ public class ToPigletVisitor extends GJDepthFirst<Object,SymbolInterface>{
 	    * f0 -> Expression()
 	    * f1 -> ( ExpressionRest() )*
 	    */
-	   public Object visit(ExpressionList n, SymbolInterface argu) {
-	      Object _ret=null;
-	      n.f0.accept(this, argu);
-	      n.f1.accept(this, argu);
-	      return _ret;
+	   public Object visit(ExpressionList n, SymbolInterface argu) {	      
+	      String str="";
+		   List<Object> _ret= (List<Object>) n.f0.accept(this, argu);
+		   str+=" TEMP "+_ret.get(0);
+	      String str1=(String)n.f1.accept(this, argu);
+	      if(str1!=null)
+	    	  str+=str1;
+	      return str;
 	   }
 
 	   /**
 	    * f0 -> ","
 	    * f1 -> Expression()
 	    */
-	   public Object visit(ExpressionRest n, SymbolInterface argu) {
-	      Object _ret=null;
+	   public Object visit(ExpressionRest n, SymbolInterface argu) {	      
 	      n.f0.accept(this, argu);
-	      n.f1.accept(this, argu);
-	      return _ret;
+	      List<Object> _ret= (List<Object>)n.f1.accept(this, argu);
+	      return " TEMP "+_ret.get(0);
 	   }
 
 	   /**
@@ -604,8 +658,31 @@ public class ToPigletVisitor extends GJDepthFirst<Object,SymbolInterface>{
 	    *       | BracketExpression()
 	    */
 	   public Object visit(PrimaryExpression n, SymbolInterface argu) {
-	      Object _ret=null;
-	      n.f0.accept(this, argu);
+		   Object _ret=null;
+	      _ret = n.f0.accept(this, argu);
+	      if(n.f0.choice instanceof Identifier)
+	      {
+	    	  String identifier=((Identifier)n.f0.choice).f0.toString();
+	    	  FunctionItem function=(FunctionItem)argu;	    	  
+	    	  ArrayList<Object> _retList=new ArrayList<Object>();
+	    	  VariableItem variable=null;
+	    	  for(int i=0;i<function.variableItem.size();i++)
+	    	  {
+	    		  variable=function.variableItem.get(i);
+	    		  if(variable.name==identifier)
+	    		  {
+	    			  if(i<function.parameterType.size())
+	    				  _retList.add(i+1);
+	    			  else
+	    				  _retList.add(variable.indexOfTemp);
+	    			  break;
+	    		  }
+	    	  }
+	    	  
+	    	
+	    	  _retList.add(variable.type);
+	    	  return _retList;
+	      }
 	      return _ret;
 	   }
 
@@ -613,8 +690,12 @@ public class ToPigletVisitor extends GJDepthFirst<Object,SymbolInterface>{
 	    * f0 -> <INTEGER_LITERAL>
 	    */
 	   public Object visit(IntegerLiteral n, SymbolInterface argu) {
-	      Object _ret=null;
+	      List<Object> _ret=new ArrayList<Object>();
+	      int tempIndex=newTemp();
 	      n.f0.accept(this, argu);
+	      appendInNewLine(String.format("MOVE TEMP %1d %2s",tempIndex,n.f0.toString()));
+	      _ret.add(tempIndex);
+	      _ret.add(new VariableType(FourType.Integer));
 	      return _ret;
 	   }
 
@@ -622,18 +703,24 @@ public class ToPigletVisitor extends GJDepthFirst<Object,SymbolInterface>{
 	    * f0 -> "true"
 	    */
 	   public Object visit(TrueLiteral n, SymbolInterface argu) {
-	      Object _ret=null;
-	      n.f0.accept(this, argu);
-	      return _ret;
+		   List<Object> _ret=new ArrayList<Object>();
+		      int tempIndex=newTemp();
+		      n.f0.accept(this, argu);
+		      appendInNewLine(String.format("MOVE TEMP %1d %2s",tempIndex,"1"));
+		      _ret.add(tempIndex,new VariableType(FourType.Boolean));
+		      return _ret;
 	   }
 
 	   /**
 	    * f0 -> "false"
 	    */
 	   public Object visit(FalseLiteral n, SymbolInterface argu) {
-	      Object _ret=null;
-	      n.f0.accept(this, argu);
-	      return _ret;
+		   List<Object> _ret=new ArrayList<Object>();
+		      int tempIndex=newTemp();
+		      n.f0.accept(this, argu);
+		      appendInNewLine(String.format("MOVE TEMP %1d %2s",tempIndex,"0"));
+		      _ret.add(tempIndex,new VariableType(FourType.Boolean));
+		      return _ret;
 	   }
 
 	   /**
@@ -649,8 +736,12 @@ public class ToPigletVisitor extends GJDepthFirst<Object,SymbolInterface>{
 	    * f0 -> "this"
 	    */
 	   public Object visit(ThisExpression n, SymbolInterface argu) {
-	      Object _ret=null;
+		   List<Object> _ret=new ArrayList<Object>();
 	      n.f0.accept(this, argu);
+	      FunctionItem function=(FunctionItem)argu;
+	      ClassItem classitem=function.parentClass;
+	      _ret.add(0);
+	      _ret.add(new VariableType(FourType.Object,classitem.name));
 	      return _ret;
 	   }
 
@@ -662,12 +753,14 @@ public class ToPigletVisitor extends GJDepthFirst<Object,SymbolInterface>{
 	    * f4 -> "]"
 	    */
 	   public Object visit(ArrayAllocationExpression n, SymbolInterface argu) {
-	      Object _ret=null;
+		   List<Object> _ret=new ArrayList<Object>();
 	      n.f0.accept(this, argu);
 	      n.f1.accept(this, argu);
 	      n.f2.accept(this, argu);
 	      n.f3.accept(this, argu);
 	      n.f4.accept(this, argu);
+	      _ret.add(250);
+	      _ret.add(new VariableType(FourType.IntegerArray));
 	      return _ret;
 	   }
 
@@ -678,11 +771,24 @@ public class ToPigletVisitor extends GJDepthFirst<Object,SymbolInterface>{
 	    * f3 -> ")"
 	    */
 	   public Object visit(AllocationExpression n, SymbolInterface argu) {
-	      Object _ret=null;
+		   List<Object> _ret=new ArrayList<Object>();
+		   int tempIndex=newTemp();
+		   int newTemp1=newTemp();
+		   int newTemp2=newTemp();
 	      n.f0.accept(this, argu);
 	      n.f1.accept(this, argu);
 	      n.f2.accept(this, argu);
 	      n.f3.accept(this, argu);
+	      ClassItem classitem=((FunctionItem)argu).parentClass.parentTable.SearchClass(n.f1.f0.toString());
+	      appendInNewLine(String.format("MOVE TEMP %1d HALLOCATE %2d",newTemp1,4*classitem.functionItem.size()));
+	      appendInNewLine(String.format("MOVE TEMP %1d HALLOCATE %2d",newTemp2,4*classitem.variableItem.size()+4));
+	      for(int i=0;i<classitem.functionItem.size();i++)
+	      {
+	    	  appendInNewLine(String.format("HSTORE TEMP %1d %2d %3s_%4s",newTemp1,4*i,classitem.name,classitem.functionItem.get(i).name));
+	      }
+	      appendInNewLine(String.format("HSTORE TEMP %1d 0 TEMP %2d",newTemp2,newTemp1));
+	      _ret.add(newTemp2);
+	      _ret.add(new VariableType(FourType.Object,n.f1.f0.toString()));
 	      return _ret;
 	   }
 
@@ -691,9 +797,13 @@ public class ToPigletVisitor extends GJDepthFirst<Object,SymbolInterface>{
 	    * f1 -> Expression()
 	    */
 	   public Object visit(NotExpression n, SymbolInterface argu) {
-	      Object _ret=null;
+		   List<Object> _ret=new ArrayList<Object>();
 	      n.f0.accept(this, argu);
-	      n.f1.accept(this, argu);
+	      int tempIndex=newTemp();
+	      int retTempIndex = (Integer)((ArrayList<Object>)(n.f1.accept(this, argu))).get(0);
+	      appendInNewLine(String.format("MOVE TEMP %1d MINUS 1 TEMP %2d",tempIndex,retTempIndex));
+	      _ret.add(tempIndex);
+	      _ret.add(new VariableType(FourType.Boolean));
 	      return _ret;
 	   }
 
@@ -705,7 +815,7 @@ public class ToPigletVisitor extends GJDepthFirst<Object,SymbolInterface>{
 	   public Object visit(BracketExpression n, SymbolInterface argu) {
 	      Object _ret=null;
 	      n.f0.accept(this, argu);
-	      n.f1.accept(this, argu);
+	      _ret = n.f1.accept(this, argu);
 	      n.f2.accept(this, argu);
 	      return _ret;
 	   }
