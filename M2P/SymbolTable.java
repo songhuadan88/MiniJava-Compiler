@@ -151,6 +151,43 @@ class ClassItem implements SymbolInterface
 		return index;
 		
 	}
+	
+	public int NumberOfVariable()
+	{
+		int num=0;
+		if(hasParent)
+		{
+			ClassItem parentClass=parentTable.SearchClass(parentName);
+			num = parentClass.NumberOfVariable();
+		}
+		return num+variableItem.size();
+	}
+	
+	public int NumberOfFunction()
+	{
+		int num=0;
+		if(hasParent)
+		{
+			ClassItem parentClass=parentTable.SearchClass(parentName);
+			num = parentClass.NumberOfFunction();
+		}
+		return num+functionItem.size();
+	}
+	
+	public VariableItem GetVariable(String variableName)
+	{
+		for(VariableItem variable : variableItem)
+		{
+			if(variable.name==variableName)
+				return variable;
+		}
+		if(hasParent)
+		{
+			ClassItem parentClass=parentTable.SearchClass(parentName);
+			return parentClass.GetVariable(variableName);
+		}
+		return null;
+	}
 
 }
 

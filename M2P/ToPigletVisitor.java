@@ -363,6 +363,26 @@ public class ToPigletVisitor extends GJDepthFirst<Object,SymbolInterface>{
 	      n.f2.accept(this, argu);
 	      return _ret;
 	   }
+	   
+	   List<Integer> SearchVariableAsLeftValue(String variableName, FunctionItem function)
+	   {
+		   
+		   for(int i=0;i<function.variableItem.size();i++)
+		   {
+			   VariableItem variable=function.variableItem.get(i);
+			   if(variable.name==variableName)
+			   {
+				   if(i<function.parameterType.size())
+					   return Arrays.asList(1, i+1);
+				   else 
+					   return Arrays.asList(1,  variable.indexOfTemp);
+			   }
+		   }
+		   ClassItem classitem=function.parentClass;
+		   int index=classitem.GetVariable(variableName).indexInParent;		   
+				   
+		   return Arrays.asList(2,index);
+	   }
 
 	   /**
 	    * f0 -> Identifier()
@@ -376,10 +396,16 @@ public class ToPigletVisitor extends GJDepthFirst<Object,SymbolInterface>{
 	      n.f1.accept(this, argu);
 	      List<Object> _retList=(List<Object>) n.f2.accept(this, argu);
 	      n.f3.accept(this, argu);
-	      FunctionItem function=(FunctionItem)argu;
-    	  VariableItem variable=function.SearchVariable(n.f0.f0.toString());
-    	  appendInNewLine(String.format("MOVE TEMP %1d TEMP %2d",variable.indexOfTemp,(Integer)_retList.get(0)));
+	      FunctionItem function=(FunctionItem)argu;    	  
+    	  List<Integer> variableTemp=SearchVariableAsLeftValue(n.f0.f0.toString(),function);
+    	  if(variableTemp.get(0)==0)
+    		  appendInNewLine(String.format("MOVE TEMP %1d TEMP %2d",variableTemp.get(1),(Integer)_retList.get(0)));
+    	  else
+    	  {
+    		  appendInNewLine(String.format("HSTORE TEMP 0 %1d TEMP %2d",4*variableTemp.get(1)+4 ,(Integer)_retList.get(0)));  
+    	  }
 	      return _ret;
+	      
 	   }
 
 	   /**
@@ -395,11 +421,27 @@ public class ToPigletVisitor extends GJDepthFirst<Object,SymbolInterface>{
 	      Object _ret=null;
 	      n.f0.accept(this, argu);
 	      n.f1.accept(this, argu);
-	      n.f2.accept(this, argu);
+	      int tempIndex1 = (Integer)((ArrayList<Object>)(n.f2.accept(this, argu))).get(0);
 	      n.f3.accept(this, argu);
 	      n.f4.accept(this, argu);
-	      n.f5.accept(this, argu);
+	      int tempIndex2 = (Integer)((ArrayList<Object>)(n.f5.accept(this, argu))).get(0);
 	      n.f6.accept(this, argu);
+	      FunctionItem function=(FunctionItem)argu;
+	      List<Integer> variableTemp=SearchVariableAsLeftValue(n.f0.f0.toString(),function);
+	      int arrayTemp=250;
+	      if(variableTemp.get(0)==0)
+	      {
+	    	  arrayTemp=variableTemp.get(1);
+	      }
+	      else
+	      {
+	    	  int tempArray=newTemp();
+	    	  appendInNewLine(String.format("HLOAD TEMP %1 TEMP 0 %2",tempArray,4*variableTemp.get(1)+4));
+	    	  arrayTemp=tempArray;
+	      }
+	      int tempIndex3=newTemp();
+	      appendInNewLine(String.format("MOVE TEMP %1d PLUS TEMP %2d TEMP %3d",tempIndex3,tempIndex1,arrayTemp));
+	      appendInNewLine(String.format("HSTORE TEMP %1d 4 TEMP %2",tempIndex3,tempIndex2));
 	      return _ret;
 	   }
 
@@ -440,11 +482,14 @@ public class ToPigletVisitor extends GJDepthFirst<Object,SymbolInterface>{
 	    */
 	   public Object visit(WhileStatement n, SymbolInterface argu) {
 	      Object _ret=null;
+	      int label=newLabel();
 	      n.f0.accept(this, argu);
 	      n.f1.accept(this, argu);
-	      n.f2.accept(this, argu);
+	      int tempIndex =(Integer)((List<Object>)n.f2.accept(this, argu)).get(0);
 	      n.f3.accept(this, argu);
+	      appendInNewLine(String.format("CJUMP TEMP %1d L%2d",tempIndex,label));
 	      n.f4.accept(this, argu);
+	      appendInNewLine(String.format("L%1d NOOP", label));	     
 	      return _ret;
 	   }
 
@@ -489,11 +534,22 @@ public class ToPigletVisitor extends GJDepthFirst<Object,SymbolInterface>{
 	    * f2 -> PrimaryExpression()
 	    */
 	   public Object visit(AndExpression n, SymbolInterface argu) {
-	      Object _ret=null;
-	      n.f0.accept(this, argu);
+		   List<Object> _ret=new ArrayList<Object>();	
+		   int label1=newLabel();
+		   int label2=newLabel();
+		   int tempIndex=newTemp();
+		   int tempIndex1=(Integer)(((List<Object>)n.f0.accept(this, argu)).get(0));
 	      n.f1.accept(this, argu);
-	      n.f2.accept(this, argu);
-	      return 250;
+	      appendInNewLine(String.format("CJUMP TEMP %1d L%2d",tempIndex1,label1));
+	      appendInNewLine(String.format("MOVE TEMP %1d 0",tempIndex));
+	      appendInNewLine(String.format("JUMP L%1d",label2));
+	      appendInNewLine(String.format("L%1d NOOP", label1));
+	      int tempIndex2=(Integer)(((List<Object>)n.f2.accept(this, argu)).get(0));	      
+	      appendInNewLine(String.format("MOVE TEMP %1d TEMP %2d", tempIndex,tempIndex2));
+	      appendInNewLine(String.format("L%1d NOOP", label2));
+	      _ret.add(tempIndex);
+	      _ret.add(new VariableType(FourType.Boolean));
+	      return _ret;
 	   }
 
 	   /**
@@ -519,11 +575,15 @@ public class ToPigletVisitor extends GJDepthFirst<Object,SymbolInterface>{
 	    * f2 -> PrimaryExpression()
 	    */
 	   public Object visit(PlusExpression n, SymbolInterface argu) {
-	      Object _ret=null;
-	      n.f0.accept(this, argu);
-	      n.f1.accept(this, argu);
-	      n.f2.accept(this, argu);
-	      return 250;
+		   List<Object> _ret=new ArrayList<Object>();		   
+		      int tempIndex1=(Integer)(((List<Object>)n.f0.accept(this, argu)).get(0));
+		      n.f1.accept(this, argu);
+		      int tempIndex2=(Integer)(((List<Object>)n.f2.accept(this, argu)).get(0));
+		      int tempIndex=newTemp();
+		      appendInNewLine(String.format("MOVE TEMP %1d PLUS TEMP %2d TEMP %3d", tempIndex,tempIndex1,tempIndex2));
+		      _ret.add(tempIndex);
+		      _ret.add(new VariableType(FourType.Integer));
+		      return _ret;
 	   }
 
 	   /**
@@ -567,12 +627,19 @@ public class ToPigletVisitor extends GJDepthFirst<Object,SymbolInterface>{
 	    * f3 -> "]"
 	    */
 	   public Object visit(ArrayLookup n, SymbolInterface argu) {
-	      Object _ret=null;
-	      n.f0.accept(this, argu);
+		   List<Object> _ret=new ArrayList<Object>();
+		   
+	      int tempIndex1 = (Integer)((ArrayList<Object>)(n.f0.accept(this, argu))).get(0);
 	      n.f1.accept(this, argu);
-	      n.f2.accept(this, argu);
+	      int tempIndex2 = (Integer)((ArrayList<Object>)(n.f2.accept(this, argu))).get(0);
 	      n.f3.accept(this, argu);
-	      return 250;
+	      int tempIndex=newTemp();
+	      int tempIndex3=newTemp();
+	      appendInNewLine(String.format("MOVE TEMP %1d PLUS TEMP %2d TEMP %3d",tempIndex3,tempIndex1,tempIndex2));
+	      appendInNewLine(String.format("HLOAD TEMP %1d TEMP %2d 4",tempIndex,tempIndex3));
+	      _ret.add(tempIndex);
+	      _ret.add(new VariableType(FourType.Integer));
+	      return _ret;
 	   }
 
 	   /**
@@ -581,11 +648,15 @@ public class ToPigletVisitor extends GJDepthFirst<Object,SymbolInterface>{
 	    * f2 -> "length"
 	    */
 	   public Object visit(ArrayLength n, SymbolInterface argu) {
-	      Object _ret=null;
-	      n.f0.accept(this, argu);
+		   List<Object> _ret=new ArrayList<Object>();
+	      int retTempIndex = (Integer)((ArrayList<Object>)(n.f0.accept(this, argu))).get(0);
 	      n.f1.accept(this, argu);
 	      n.f2.accept(this, argu);
-	      return 250;
+	      int tempIndex=newTemp();
+	      appendInNewLine(String.format("HLOAD TEMP %1d TEMP %2d 0",tempIndex,retTempIndex));
+	      _ret.add(tempIndex);
+	      _ret.add(new VariableType(FourType.Integer));
+	      return _ret;
 	   }
 
 	   /**
@@ -678,9 +749,16 @@ public class ToPigletVisitor extends GJDepthFirst<Object,SymbolInterface>{
 	    			  break;
 	    		  }
 	    	  }
-	    	  
-	    	
-	    	  _retList.add(variable.type);
+	    	  if(variable!=null)
+	    		  _retList.add(variable.type);
+	    	  else
+	    	  {
+	    		  variable= function.parentClass.GetVariable(identifier);
+	    		  int tempIndex=newTemp();
+	    		  appendInNewLine(String.format("HLOAD TEMP %1d TEMP 0 %2d",tempIndex,4*variable.indexInParent+4));
+	    		  _retList.add(tempIndex);
+	    		  _retList.add(variable.type);
+	    	  }
 	    	  return _retList;
 	      }
 	      return _ret;
@@ -707,7 +785,8 @@ public class ToPigletVisitor extends GJDepthFirst<Object,SymbolInterface>{
 		      int tempIndex=newTemp();
 		      n.f0.accept(this, argu);
 		      appendInNewLine(String.format("MOVE TEMP %1d %2s",tempIndex,"1"));
-		      _ret.add(tempIndex,new VariableType(FourType.Boolean));
+		      _ret.add(tempIndex);
+		      _ret.add(new VariableType(FourType.Boolean));
 		      return _ret;
 	   }
 
@@ -719,7 +798,8 @@ public class ToPigletVisitor extends GJDepthFirst<Object,SymbolInterface>{
 		      int tempIndex=newTemp();
 		      n.f0.accept(this, argu);
 		      appendInNewLine(String.format("MOVE TEMP %1d %2s",tempIndex,"0"));
-		      _ret.add(tempIndex,new VariableType(FourType.Boolean));
+		      _ret.add(tempIndex);
+		      _ret.add(new VariableType(FourType.Boolean));
 		      return _ret;
 	   }
 
@@ -757,9 +837,16 @@ public class ToPigletVisitor extends GJDepthFirst<Object,SymbolInterface>{
 	      n.f0.accept(this, argu);
 	      n.f1.accept(this, argu);
 	      n.f2.accept(this, argu);
-	      n.f3.accept(this, argu);
+	      int retTempIndex = (Integer)((ArrayList<Object>)(n.f3.accept(this, argu))).get(0);
 	      n.f4.accept(this, argu);
-	      _ret.add(250);
+	      int tempIndex1=newTemp();
+	      int tempIndex2=newTemp();
+	      int tempIndex3=newTemp();
+	      appendInNewLine(String.format("MOVE TEMP %1d TIMES TEMP %2d 4",tempIndex3,retTempIndex));
+	      appendInNewLine(String.format("MOVE TEMP %1d PLUS TEMP %2d 4",tempIndex1,tempIndex3));
+	      appendInNewLine(String.format("MOVE TEMP %1d HALLOCATE TEMP %2d",tempIndex2,tempIndex1));
+	      appendInNewLine(String.format("HSTORE TEMP %1d 0 TEMP %2d",tempIndex2,retTempIndex));	      
+	      _ret.add(tempIndex2);
 	      _ret.add(new VariableType(FourType.IntegerArray));
 	      return _ret;
 	   }
@@ -780,8 +867,8 @@ public class ToPigletVisitor extends GJDepthFirst<Object,SymbolInterface>{
 	      n.f2.accept(this, argu);
 	      n.f3.accept(this, argu);
 	      ClassItem classitem=((FunctionItem)argu).parentClass.parentTable.SearchClass(n.f1.f0.toString());
-	      appendInNewLine(String.format("MOVE TEMP %1d HALLOCATE %2d",newTemp1,4*classitem.functionItem.size()));
-	      appendInNewLine(String.format("MOVE TEMP %1d HALLOCATE %2d",newTemp2,4*classitem.variableItem.size()+4));
+	      appendInNewLine(String.format("MOVE TEMP %1d HALLOCATE %2d",newTemp1,4*classitem.NumberOfFunction()));
+	      appendInNewLine(String.format("MOVE TEMP %1d HALLOCATE %2d",newTemp2,4*classitem.NumberOfVariable()+4));
 	      for(int i=0;i<classitem.functionItem.size();i++)
 	      {
 	    	  appendInNewLine(String.format("HSTORE TEMP %1d %2d %3s_%4s",newTemp1,4*i,classitem.name,classitem.functionItem.get(i).name));
