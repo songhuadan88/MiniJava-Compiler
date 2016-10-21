@@ -1,3 +1,7 @@
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.List;
+
 import syntaxtree.AllocationExpression;
 import syntaxtree.AndExpression;
 import syntaxtree.ArrayAllocationExpression;
@@ -24,10 +28,12 @@ import syntaxtree.Identifier;
 import syntaxtree.IfStatement;
 import syntaxtree.IntegerLiteral;
 import syntaxtree.IntegerType;
-import syntaxtree.MainClass;
 import syntaxtree.MessageSend;
+import syntaxtree.MainClass;
 import syntaxtree.MethodDeclaration;
 import syntaxtree.MinusExpression;
+import syntaxtree.Node;
+import syntaxtree.NodeListOptional;
 import syntaxtree.NotExpression;
 import syntaxtree.PlusExpression;
 import syntaxtree.PrimaryExpression;
@@ -42,20 +48,34 @@ import syntaxtree.VarDeclaration;
 import syntaxtree.WhileStatement;
 import visitor.*;
 
-
-public class BuildSymbolTableVisitor extends GJDepthFirst<VariableType,SymbolInterface>
+public class BuildSymbolTableVisitor extends GJDepthFirst<Object,Object>
 {
+
+	   public Object visit(NodeListOptional n, Object argu) {
+		   List<Object> _ret=new ArrayList<Object>();
+		   if ( n.present() ) {	        
+	         int _count=0;
+	         for ( Enumeration<Node> e = n.elements(); e.hasMoreElements(); ) {
+	            _ret.add(e.nextElement().accept(this,argu));
+	            _count++;
+	         }	       
+		   }	    
+	       return _ret;
+	   }
+
 	/**
 	    * f0 -> MainClass()
 	    * f1 -> ( TypeDeclaration() )*
 	    * f2 -> <EOF>
 	    */
-	   public VariableType visit(Goal n, SymbolInterface argu) {
-	      VariableType _ret=null;
-	      n.f0.accept(this, argu);
-	      n.f1.accept(this, argu);
+	   public Object visit(Goal n, Object argu) {	      
+	      FirstClass mainClass =(FirstClass)n.f0.accept(this, argu);
+	      SymbolTable.addMainClass(mainClass);
+	      List<OrdinaryClass> allOrdinaryClass = (List<OrdinaryClass>) n.f1.accept(this, argu);
+	      for(OrdinaryClass ordinaryClass : allOrdinaryClass)
+	    	  SymbolTable.addOrdinaryClass(ordinaryClass);	      
 	      n.f2.accept(this, argu);
-	      return _ret;
+	      return null;
 	   }
 
 	   /**
@@ -78,12 +98,10 @@ public class BuildSymbolTableVisitor extends GJDepthFirst<VariableType,SymbolInt
 	    * f16 -> "}"
 	    * f17 -> "}"
 	    */
-	   public VariableType visit(MainClass n, SymbolInterface argu) {
-	      VariableType _ret=null;	      
-	      SymbolTable fullSymbolTable=(SymbolTable)argu;
+	   public Object visit(MainClass n, Object argu) {	           	      
 	      n.f0.accept(this, argu);
-	      n.f1.accept(this, argu);
-	      MainClassItem classItem=new MainClassItem(n.f1.f0.toString());
+	      String className = (String)n.f1.accept(this, argu);
+	      FirstClass mainClass=new FirstClass(className);
 	      n.f2.accept(this, argu);
 	      n.f3.accept(this, argu);
 	      n.f4.accept(this, argu);
@@ -93,27 +111,26 @@ public class BuildSymbolTableVisitor extends GJDepthFirst<VariableType,SymbolInt
 	      n.f8.accept(this, argu);
 	      n.f9.accept(this, argu);
 	      n.f10.accept(this, argu);
-	      n.f11.accept(this, argu);
-	      MainFunctionItem functionItem=new MainFunctionItem(n.f11.f0.toString());
+	      String parameterName=(String) n.f11.accept(this, argu);
+	      MainMethod method=new MainMethod(parameterName);
 	      n.f12.accept(this, argu);
 	      n.f13.accept(this, argu);
-	      n.f14.accept(this, functionItem);
-	      n.f15.accept(this, argu);
+	      List<Variable> allVariable =(List<Variable>) n.f14.accept(this, method);
+	      for(Variable variable : allVariable)
+	    	  method.addLocalVariable(variable);
+	      n.f15.accept(this, method);
 	      n.f16.accept(this, argu);
 	      n.f17.accept(this, argu);
-	      classItem.addMainFunction(functionItem);
-	      fullSymbolTable.addMainClass(classItem);	      
-	      return _ret;
+	      mainClass.addMainMethod(method);	      	     
+	      return mainClass;
 	   }
 
 	   /**
 	    * f0 -> ClassDeclaration()
 	    *       | ClassExtendsDeclaration()
 	    */
-	   public VariableType visit(TypeDeclaration n, SymbolInterface argu) {
-	      VariableType _ret=null;
-	      n.f0.accept(this, argu);
-	      return _ret;
+	   public Object visit(TypeDeclaration n, Object argu) {	      
+	      return n.f0.accept(this, argu);	      
 	   }
 
 	   /**
@@ -124,18 +141,19 @@ public class BuildSymbolTableVisitor extends GJDepthFirst<VariableType,SymbolInt
 	    * f4 -> ( MethodDeclaration() )*
 	    * f5 -> "}"
 	    */
-	   public VariableType visit(ClassDeclaration n, SymbolInterface argu) {
-	      VariableType _ret=null;
-	      SymbolTable fullSymbolTable=(SymbolTable)argu;
+	   public Object visit(ClassDeclaration n, Object argu) {	          
 	      n.f0.accept(this, argu);
-	      n.f1.accept(this, argu);
-	      ClassItem classItem=new ClassItem(n.f1.f0.toString());
+	      String className = (String)n.f1.accept(this, argu);
+	      OrdinaryClass ordinaryClass=new OrdinaryClass(className);
 	      n.f2.accept(this, argu);
-	      n.f3.accept(this, classItem);
-	      n.f4.accept(this, classItem);
-	      n.f5.accept(this, argu);
-	      fullSymbolTable.addClass(classItem);
-	      return _ret;
+	      List<Variable> allVariable=(List<Variable>) n.f3.accept(this, ordinaryClass);
+	      for(Variable variable : allVariable)
+	    	  ordinaryClass.addVariable(variable);
+	      List<Method> allMethod =(List<Method>) n.f4.accept(this, ordinaryClass);
+	      for(Method method : allMethod)
+	    	  ordinaryClass.addMethod(method);
+	      n.f5.accept(this, argu);	      
+	      return ordinaryClass;
 	   }
 
 	   /**
@@ -148,20 +166,21 @@ public class BuildSymbolTableVisitor extends GJDepthFirst<VariableType,SymbolInt
 	    * f6 -> ( MethodDeclaration() )*
 	    * f7 -> "}"
 	    */
-	   public VariableType visit(ClassExtendsDeclaration n, SymbolInterface argu) {
-	      VariableType _ret=null;
-	      SymbolTable fullSymbolTable=(SymbolTable)argu;
+	   public Object visit(ClassExtendsDeclaration n, Object argu) {	      
 	      n.f0.accept(this, argu);
-	      n.f1.accept(this, argu);
+	      String className =(String)n.f1.accept(this, argu);
 	      n.f2.accept(this, argu);
-	      n.f3.accept(this, argu);
-	      ClassItem classItem=new ClassItem(n.f1.f0.toString(),n.f3.f0.toString());
+	      String parentClassName =(String)n.f3.accept(this, argu);
+	      OrdinaryClass ordinaryClass=new OrdinaryClass(className,parentClassName);
 	      n.f4.accept(this, argu);
-	      n.f5.accept(this, classItem);
-	      n.f6.accept(this, classItem);
-	      n.f7.accept(this, argu);
-	      fullSymbolTable.addClass(classItem);
-	      return _ret;
+	      List<Variable> allVariable=(List<Variable>) n.f5.accept(this, ordinaryClass);
+	      for(Variable variable : allVariable)
+	    	  ordinaryClass.addVariable(variable);
+	      List<Method> allMethod =(List<Method>) n.f6.accept(this, ordinaryClass);
+	      for(Method method : allMethod)
+	    	  ordinaryClass.addMethod(method);
+	      n.f7.accept(this, argu);	     
+	      return ordinaryClass;
 	   }
 
 	   /**
@@ -169,14 +188,12 @@ public class BuildSymbolTableVisitor extends GJDepthFirst<VariableType,SymbolInt
 	    * f1 -> Identifier()
 	    * f2 -> ";"
 	    */
-	   public VariableType visit(VarDeclaration n, SymbolInterface argu) {
-	      VariableType _ret=null;
-	      VariableType type=n.f0.accept(this, argu);
-	      n.f1.accept(this, argu);
+	   public Object visit(VarDeclaration n, Object argu) {	      
+	      VariableType type=(VariableType)n.f0.accept(this, argu);
+	      String variableName =(String)n.f1.accept(this, argu);
 	      n.f2.accept(this, argu);
-	      VariableItem variableItem=new VariableItem(type,n.f1.f0.toString());
-	      argu.addVariable(variableItem);
-	      return _ret;
+	      Variable variable=new Variable(type,variableName);	     
+	      return variable;
 	   }
 
 	   /**
@@ -194,60 +211,61 @@ public class BuildSymbolTableVisitor extends GJDepthFirst<VariableType,SymbolInt
 	    * f11 -> ";"
 	    * f12 -> "}"
 	    */
-	   public VariableType visit(MethodDeclaration n, SymbolInterface argu) {
-	      VariableType _ret=null;	  
-	      ClassItem classItem=(ClassItem)argu;
+	   public Object visit(MethodDeclaration n, Object argu) {	       	      
 	      n.f0.accept(this, argu);
-	      VariableType retType=n.f1.accept(this, argu);
-	      n.f2.accept(this, argu);
-	      FunctionItem functionItem=new FunctionItem(n.f2.f0.toString(),retType);
+	      VariableType retType=(VariableType)n.f1.accept(this, argu);
+	      String methodName =(String) n.f2.accept(this, argu);
+	      Method method=new Method(methodName,retType);
 	      n.f3.accept(this, argu);
-	      n.f4.accept(this, functionItem);
+	      List<Variable> allParameter = (List<Variable>)n.f4.accept(this, method);
+	      if(allParameter !=null)
+	      {
+		      for(Variable parameter : allParameter)
+		    	  method.addParameter(parameter);
+	      }
 	      n.f5.accept(this, argu);
 	      n.f6.accept(this, argu);
-	      n.f7.accept(this, functionItem);
-	      n.f8.accept(this, argu);
+	      List<Variable> allVariable = (List<Variable>)n.f7.accept(this, method);
+	      for(Variable variable : allVariable)
+	    	  method.addLocalVariable(variable);
+	      n.f8.accept(this, method);
 	      n.f9.accept(this, argu);
-	      n.f10.accept(this, argu);
+	      n.f10.accept(this, method);
 	      n.f11.accept(this, argu);
-	      n.f12.accept(this, argu);
-	      classItem.addFunction(functionItem);
-	      return _ret;
+	      n.f12.accept(this, argu);	      
+	      return method;
 	   }
 
 	   /**
 	    * f0 -> FormalParameter()
 	    * f1 -> ( FormalParameterRest() )*
 	    */
-	   public VariableType visit(FormalParameterList n, SymbolInterface argu) {
-	      VariableType _ret=null;	      
-	      n.f0.accept(this, argu);
-	      n.f1.accept(this, argu);
-	      return _ret;
+	   public Object visit(FormalParameterList n, Object argu) {
+	      List<Variable> allParameter=new ArrayList<Variable>();     
+	      Variable firstParameter = (Variable)n.f0.accept(this, argu);
+	      allParameter.add(firstParameter);
+	      List<Variable> restParameter =(List<Variable>)n.f1.accept(this, argu);
+	      allParameter.addAll(restParameter);
+	      return allParameter;
 	   }
 
 	   /**
 	    * f0 -> Type()
 	    * f1 -> Identifier()
 	    */
-	   public VariableType visit(FormalParameter n, SymbolInterface argu) {
-	      VariableType _ret=null;
-	      FunctionItem functionItem=(FunctionItem)argu;
-	      VariableType type=n.f0.accept(this, argu);
-	      n.f1.accept(this, argu);
-	      functionItem.addParameter(type,n.f1.f0.toString());
-	      return _ret;
+	   public Object visit(FormalParameter n, Object argu) {	      	      
+	      VariableType type=(VariableType)n.f0.accept(this, argu);
+	      String parameterName=(String)n.f1.accept(this, argu);	      
+	      return new Variable(type,parameterName);
 	   }
 
 	   /**
 	    * f0 -> ","
 	    * f1 -> FormalParameter()
 	    */
-	   public VariableType visit(FormalParameterRest n, SymbolInterface argu) {
-	      VariableType _ret=null;
+	   public Object visit(FormalParameterRest n, Object argu) {	      
 	      n.f0.accept(this, argu);
-	      n.f1.accept(this, argu);
-	      return _ret;
+	      return n.f1.accept(this, argu);	      
 	   }
 
 	   /**
@@ -256,10 +274,13 @@ public class BuildSymbolTableVisitor extends GJDepthFirst<VariableType,SymbolInt
 	    *       | IntegerType()
 	    *       | Identifier()
 	    */
-	   public VariableType visit(Type n, SymbolInterface argu) {
-	      VariableType _ret=null;
-	      _ret = n.f0.accept(this, argu);
-	      return _ret;
+	   public Object visit(Type n, Object argu) {	      
+	      Object ret = n.f0.accept(this, argu);
+	      if(n.f0.choice instanceof Identifier)
+	      {
+	    	  return new VariableType(FourType.Object,(String)ret);
+	      }
+	      return ret;
 	   }
 
 	   /**
@@ -267,30 +288,27 @@ public class BuildSymbolTableVisitor extends GJDepthFirst<VariableType,SymbolInt
 	    * f1 -> "["
 	    * f2 -> "]"
 	    */
-	   public VariableType visit(ArrayType n, SymbolInterface argu) {
-	      VariableType _ret=new VariableType(FourType.IntegerArray);
+	   public Object visit(ArrayType n, Object argu) {	      
 	      n.f0.accept(this, argu);
 	      n.f1.accept(this, argu);
 	      n.f2.accept(this, argu);
-	      return _ret;
+	      return new VariableType(FourType.IntegerArray);
 	   }
 
 	   /**
 	    * f0 -> "boolean"
 	    */
-	   public VariableType visit(BooleanType n, SymbolInterface argu) {
-	      VariableType _ret=new VariableType(FourType.Boolean);
+	   public Object visit(BooleanType n, Object argu) {	      
 	      n.f0.accept(this, argu);
-	      return _ret;
+	      return new VariableType(FourType.Boolean);
 	   }
 
 	   /**
 	    * f0 -> "int"
 	    */
-	   public VariableType visit(IntegerType n, SymbolInterface argu) {
-	      VariableType _ret=new VariableType(FourType.Integer);
+	   public Object visit(IntegerType n, Object argu) {	      
 	      n.f0.accept(this, argu);
-	      return _ret;
+	      return new VariableType(FourType.Integer);
 	   }
 
 	   /**
@@ -301,8 +319,8 @@ public class BuildSymbolTableVisitor extends GJDepthFirst<VariableType,SymbolInt
 	    *       | WhileStatement()
 	    *       | PrintStatement()
 	    */
-	   public VariableType visit(Statement n, SymbolInterface argu) {
-	      VariableType _ret=null;
+	   public Object visit(Statement n, Object argu) {
+	      Object _ret=null;
 	      n.f0.accept(this, argu);
 	      return _ret;
 	   }
@@ -312,8 +330,8 @@ public class BuildSymbolTableVisitor extends GJDepthFirst<VariableType,SymbolInt
 	    * f1 -> ( Statement() )*
 	    * f2 -> "}"
 	    */
-	   public VariableType visit(Block n, SymbolInterface argu) {
-	      VariableType _ret=null;
+	   public Object visit(Block n, Object argu) {
+	      Object _ret=null;
 	      n.f0.accept(this, argu);
 	      n.f1.accept(this, argu);
 	      n.f2.accept(this, argu);
@@ -326,8 +344,8 @@ public class BuildSymbolTableVisitor extends GJDepthFirst<VariableType,SymbolInt
 	    * f2 -> Expression()
 	    * f3 -> ";"
 	    */
-	   public VariableType visit(AssignmentStatement n, SymbolInterface argu) {
-	      VariableType _ret=null;
+	   public Object visit(AssignmentStatement n, Object argu) {
+	      Object _ret=null;
 	      n.f0.accept(this, argu);
 	      n.f1.accept(this, argu);
 	      n.f2.accept(this, argu);
@@ -344,8 +362,8 @@ public class BuildSymbolTableVisitor extends GJDepthFirst<VariableType,SymbolInt
 	    * f5 -> Expression()
 	    * f6 -> ";"
 	    */
-	   public VariableType visit(ArrayAssignmentStatement n, SymbolInterface argu) {
-	      VariableType _ret=null;
+	   public Object visit(ArrayAssignmentStatement n, Object argu) {
+	      Object _ret=null;
 	      n.f0.accept(this, argu);
 	      n.f1.accept(this, argu);
 	      n.f2.accept(this, argu);
@@ -365,8 +383,8 @@ public class BuildSymbolTableVisitor extends GJDepthFirst<VariableType,SymbolInt
 	    * f5 -> "else"
 	    * f6 -> Statement()
 	    */
-	   public VariableType visit(IfStatement n, SymbolInterface argu) {
-	      VariableType _ret=null;
+	   public Object visit(IfStatement n, Object argu) {
+	      Object _ret=null;
 	      n.f0.accept(this, argu);
 	      n.f1.accept(this, argu);
 	      n.f2.accept(this, argu);
@@ -384,8 +402,8 @@ public class BuildSymbolTableVisitor extends GJDepthFirst<VariableType,SymbolInt
 	    * f3 -> ")"
 	    * f4 -> Statement()
 	    */
-	   public VariableType visit(WhileStatement n, SymbolInterface argu) {
-	      VariableType _ret=null;
+	   public Object visit(WhileStatement n, Object argu) {
+	      Object _ret=null;
 	      n.f0.accept(this, argu);
 	      n.f1.accept(this, argu);
 	      n.f2.accept(this, argu);
@@ -401,8 +419,8 @@ public class BuildSymbolTableVisitor extends GJDepthFirst<VariableType,SymbolInt
 	    * f3 -> ")"
 	    * f4 -> ";"
 	    */
-	   public VariableType visit(PrintStatement n, SymbolInterface argu) {
-	      VariableType _ret=null;
+	   public Object visit(PrintStatement n, Object argu) {
+	      Object _ret=null;
 	      n.f0.accept(this, argu);
 	      n.f1.accept(this, argu);
 	      n.f2.accept(this, argu);
@@ -422,8 +440,8 @@ public class BuildSymbolTableVisitor extends GJDepthFirst<VariableType,SymbolInt
 	    *       | MessageSend()
 	    *       | PrimaryExpression()
 	    */
-	   public VariableType visit(Expression n, SymbolInterface argu) {
-	      VariableType _ret=null;
+	   public Object visit(Expression n, Object argu) {
+	      Object _ret=null;
 	      n.f0.accept(this, argu);
 	      return _ret;
 	   }
@@ -433,8 +451,8 @@ public class BuildSymbolTableVisitor extends GJDepthFirst<VariableType,SymbolInt
 	    * f1 -> "&&"
 	    * f2 -> PrimaryExpression()
 	    */
-	   public VariableType visit(AndExpression n, SymbolInterface argu) {
-	      VariableType _ret=null;
+	   public Object visit(AndExpression n, Object argu) {
+	      Object _ret=null;
 	      n.f0.accept(this, argu);
 	      n.f1.accept(this, argu);
 	      n.f2.accept(this, argu);
@@ -446,8 +464,8 @@ public class BuildSymbolTableVisitor extends GJDepthFirst<VariableType,SymbolInt
 	    * f1 -> "<"
 	    * f2 -> PrimaryExpression()
 	    */
-	   public VariableType visit(CompareExpression n, SymbolInterface argu) {
-	      VariableType _ret=null;
+	   public Object visit(CompareExpression n, Object argu) {
+	      Object _ret=null;
 	      n.f0.accept(this, argu);
 	      n.f1.accept(this, argu);
 	      n.f2.accept(this, argu);
@@ -459,8 +477,8 @@ public class BuildSymbolTableVisitor extends GJDepthFirst<VariableType,SymbolInt
 	    * f1 -> "+"
 	    * f2 -> PrimaryExpression()
 	    */
-	   public VariableType visit(PlusExpression n, SymbolInterface argu) {
-	      VariableType _ret=null;
+	   public Object visit(PlusExpression n, Object argu) {
+	      Object _ret=null;
 	      n.f0.accept(this, argu);
 	      n.f1.accept(this, argu);
 	      n.f2.accept(this, argu);
@@ -472,8 +490,8 @@ public class BuildSymbolTableVisitor extends GJDepthFirst<VariableType,SymbolInt
 	    * f1 -> "-"
 	    * f2 -> PrimaryExpression()
 	    */
-	   public VariableType visit(MinusExpression n, SymbolInterface argu) {
-	      VariableType _ret=null;
+	   public Object visit(MinusExpression n, Object argu) {
+	      Object _ret=null;
 	      n.f0.accept(this, argu);
 	      n.f1.accept(this, argu);
 	      n.f2.accept(this, argu);
@@ -485,8 +503,8 @@ public class BuildSymbolTableVisitor extends GJDepthFirst<VariableType,SymbolInt
 	    * f1 -> "*"
 	    * f2 -> PrimaryExpression()
 	    */
-	   public VariableType visit(TimesExpression n, SymbolInterface argu) {
-	      VariableType _ret=null;
+	   public Object visit(TimesExpression n, Object argu) {
+	      Object _ret=null;
 	      n.f0.accept(this, argu);
 	      n.f1.accept(this, argu);
 	      n.f2.accept(this, argu);
@@ -499,8 +517,8 @@ public class BuildSymbolTableVisitor extends GJDepthFirst<VariableType,SymbolInt
 	    * f2 -> PrimaryExpression()
 	    * f3 -> "]"
 	    */
-	   public VariableType visit(ArrayLookup n, SymbolInterface argu) {
-	      VariableType _ret=null;
+	   public Object visit(ArrayLookup n, Object argu) {
+	      Object _ret=null;
 	      n.f0.accept(this, argu);
 	      n.f1.accept(this, argu);
 	      n.f2.accept(this, argu);
@@ -513,8 +531,8 @@ public class BuildSymbolTableVisitor extends GJDepthFirst<VariableType,SymbolInt
 	    * f1 -> "."
 	    * f2 -> "length"
 	    */
-	   public VariableType visit(ArrayLength n, SymbolInterface argu) {
-	      VariableType _ret=null;
+	   public Object visit(ArrayLength n, Object argu) {
+	      Object _ret=null;
 	      n.f0.accept(this, argu);
 	      n.f1.accept(this, argu);
 	      n.f2.accept(this, argu);
@@ -529,8 +547,8 @@ public class BuildSymbolTableVisitor extends GJDepthFirst<VariableType,SymbolInt
 	    * f4 -> ( ExpressionList() )?
 	    * f5 -> ")"
 	    */
-	   public VariableType visit(MessageSend n, SymbolInterface argu) {
-	      VariableType _ret=null;
+	   public Object visit(MessageSend n, Object argu) {
+	      Object _ret=null;
 	      n.f0.accept(this, argu);
 	      n.f1.accept(this, argu);
 	      n.f2.accept(this, argu);
@@ -544,8 +562,8 @@ public class BuildSymbolTableVisitor extends GJDepthFirst<VariableType,SymbolInt
 	    * f0 -> Expression()
 	    * f1 -> ( ExpressionRest() )*
 	    */
-	   public VariableType visit(ExpressionList n, SymbolInterface argu) {
-	      VariableType _ret=null;
+	   public Object visit(ExpressionList n, Object argu) {
+	      Object _ret=null;
 	      n.f0.accept(this, argu);
 	      n.f1.accept(this, argu);
 	      return _ret;
@@ -555,8 +573,8 @@ public class BuildSymbolTableVisitor extends GJDepthFirst<VariableType,SymbolInt
 	    * f0 -> ","
 	    * f1 -> Expression()
 	    */
-	   public VariableType visit(ExpressionRest n, SymbolInterface argu) {
-	      VariableType _ret=null;
+	   public Object visit(ExpressionRest n, Object argu) {
+	      Object _ret=null;
 	      n.f0.accept(this, argu);
 	      n.f1.accept(this, argu);
 	      return _ret;
@@ -573,8 +591,8 @@ public class BuildSymbolTableVisitor extends GJDepthFirst<VariableType,SymbolInt
 	    *       | NotExpression()
 	    *       | BracketExpression()
 	    */
-	   public VariableType visit(PrimaryExpression n, SymbolInterface argu) {
-	      VariableType _ret=null;
+	   public Object visit(PrimaryExpression n, Object argu) {
+	      Object _ret=null;
 	      n.f0.accept(this, argu);
 	      return _ret;
 	   }
@@ -582,8 +600,8 @@ public class BuildSymbolTableVisitor extends GJDepthFirst<VariableType,SymbolInt
 	   /**
 	    * f0 -> <INTEGER_LITERAL>
 	    */
-	   public VariableType visit(IntegerLiteral n, SymbolInterface argu) {
-	      VariableType _ret=null;
+	   public Object visit(IntegerLiteral n, Object argu) {
+	      Object _ret=null;
 	      n.f0.accept(this, argu);
 	      return _ret;
 	   }
@@ -591,8 +609,8 @@ public class BuildSymbolTableVisitor extends GJDepthFirst<VariableType,SymbolInt
 	   /**
 	    * f0 -> "true"
 	    */
-	   public VariableType visit(TrueLiteral n, SymbolInterface argu) {
-	      VariableType _ret=null;
+	   public Object visit(TrueLiteral n, Object argu) {
+	      Object _ret=null;
 	      n.f0.accept(this, argu);
 	      return _ret;
 	   }
@@ -600,8 +618,8 @@ public class BuildSymbolTableVisitor extends GJDepthFirst<VariableType,SymbolInt
 	   /**
 	    * f0 -> "false"
 	    */
-	   public VariableType visit(FalseLiteral n, SymbolInterface argu) {
-	      VariableType _ret=null;
+	   public Object visit(FalseLiteral n, Object argu) {
+	      Object _ret=null;
 	      n.f0.accept(this, argu);
 	      return _ret;
 	   }
@@ -609,17 +627,16 @@ public class BuildSymbolTableVisitor extends GJDepthFirst<VariableType,SymbolInt
 	   /**
 	    * f0 -> <IDENTIFIER>
 	    */
-	   public VariableType visit(Identifier n, SymbolInterface argu) {
-	      VariableType _ret=new VariableType(FourType.Object,n.f0.toString());
+	   public Object visit(Identifier n, Object argu) {	      
 	      n.f0.accept(this, argu);
-	      return _ret;
+	      return n.f0.toString();
 	   }
 
 	   /**
 	    * f0 -> "this"
 	    */
-	   public VariableType visit(ThisExpression n, SymbolInterface argu) {
-	      VariableType _ret=null;
+	   public Object visit(ThisExpression n, Object argu) {
+	      Object _ret=null;
 	      n.f0.accept(this, argu);
 	      return _ret;
 	   }
@@ -631,8 +648,8 @@ public class BuildSymbolTableVisitor extends GJDepthFirst<VariableType,SymbolInt
 	    * f3 -> Expression()
 	    * f4 -> "]"
 	    */
-	   public VariableType visit(ArrayAllocationExpression n, SymbolInterface argu) {
-	      VariableType _ret=null;
+	   public Object visit(ArrayAllocationExpression n, Object argu) {
+	      Object _ret=null;
 	      n.f0.accept(this, argu);
 	      n.f1.accept(this, argu);
 	      n.f2.accept(this, argu);
@@ -647,8 +664,8 @@ public class BuildSymbolTableVisitor extends GJDepthFirst<VariableType,SymbolInt
 	    * f2 -> "("
 	    * f3 -> ")"
 	    */
-	   public VariableType visit(AllocationExpression n, SymbolInterface argu) {
-	      VariableType _ret=null;
+	   public Object visit(AllocationExpression n, Object argu) {
+	      Object _ret=null;
 	      n.f0.accept(this, argu);
 	      n.f1.accept(this, argu);
 	      n.f2.accept(this, argu);
@@ -660,8 +677,8 @@ public class BuildSymbolTableVisitor extends GJDepthFirst<VariableType,SymbolInt
 	    * f0 -> "!"
 	    * f1 -> Expression()
 	    */
-	   public VariableType visit(NotExpression n, SymbolInterface argu) {
-	      VariableType _ret=null;
+	   public Object visit(NotExpression n, Object argu) {
+	      Object _ret=null;
 	      n.f0.accept(this, argu);
 	      n.f1.accept(this, argu);
 	      return _ret;
@@ -672,8 +689,8 @@ public class BuildSymbolTableVisitor extends GJDepthFirst<VariableType,SymbolInt
 	    * f1 -> Expression()
 	    * f2 -> ")"
 	    */
-	   public VariableType visit(BracketExpression n, SymbolInterface argu) {
-	      VariableType _ret=null;
+	   public Object visit(BracketExpression n, Object argu) {
+	      Object _ret=null;
 	      n.f0.accept(this, argu);
 	      n.f1.accept(this, argu);
 	      n.f2.accept(this, argu);
