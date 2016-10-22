@@ -70,29 +70,30 @@ class OrdinaryClass
 			allMethodIdentifier=new ArrayList<String>();
 		for(Method method : allMethod)
 		{
-			allMethodIdentifier.add(String.format("%1s_%2s", name, method.name));
+			boolean hasInParent=false;
+			for(int i=0;i<allMethodIdentifier.size();i++)
+			{
+				if(allMethodIdentifier.get(i).endsWith("_"+method.name))
+				{
+					allMethodIdentifier.set(i, String.format("%1s_%2s", name, method.name));
+					hasInParent=true;
+					break;
+				}
+			}				
+			if(!hasInParent)
+				allMethodIdentifier.add(String.format("%1s_%2s", name, method.name));
+			
 		}
 		return allMethodIdentifier;
 	}
 
 	// return the index for the method, the index should start with parent class
 	public int SearchMethod(String methodName) {
-		// TODO Auto-generated method stub
-		int numberOfMethodInParentClass=0;
-		if(hasParent)
+		List<String> methodIdentifier = GetMethodIdentifier();
+		for(int i=0;i<methodIdentifier.size();i++)
 		{
-			OrdinaryClass parentClass=SymbolTable.SearchClass(parentName);
-			numberOfMethodInParentClass = parentClass.NumberOfMethod();
-		}
-		for(int i=0;i<allMethod.size();i++)
-		{
-			if(allMethod.get(i).name==methodName)
-				return i+numberOfMethodInParentClass;
-		}
-		if(hasParent)
-		{
-			OrdinaryClass parentClass=SymbolTable.SearchClass(parentName);
-			return parentClass.SearchMethod(methodName);
+			if(methodIdentifier.get(i).endsWith("_"+methodName))
+				return i;
 		}
 		return -1;		
 	}

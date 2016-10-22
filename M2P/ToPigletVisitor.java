@@ -532,15 +532,15 @@ public class ToPigletVisitor extends GJDepthFirst<Object,Object>{
 		   String label2=newLabel();
 		   int resultTempIndex=methodArgu.newTemp();
 		   ExpressionResult operand1Expression=(ExpressionResult)n.f0.accept(this, argu);
-   	      n.f1.accept(this, argu);
-	      append(String.format("CJUMP TEMP %1d %2s",operand1Expression.tempIndex,label1));
-	      append(String.format("MOVE TEMP %1d 0",resultTempIndex));
-	      append(String.format("JUMP %1s",label2));
-	      append(String.format("%1s NOOP", label1));
-	      ExpressionResult operand2Expression=(ExpressionResult)n.f2.accept(this, argu);     
-	      append(String.format("MOVE TEMP %1d TEMP %2d", resultTempIndex,operand2Expression.tempIndex));
-	      append(String.format("%1s NOOP", label2));	      
-	      return new ExpressionResult(operand1Expression.type,resultTempIndex);
+   	       n.f1.accept(this, argu);
+	       append(String.format("CJUMP TEMP %1d %2s",operand1Expression.tempIndex,label1));
+	       ExpressionResult operand2Expression=(ExpressionResult)n.f2.accept(this, argu);     
+	       append(String.format("MOVE TEMP %1d TEMP %2d", resultTempIndex,operand2Expression.tempIndex));
+	       append(String.format("JUMP %1s",label2));   
+	       append(String.format("%1s NOOP", label1));
+	       append(String.format("MOVE TEMP %1d 0",resultTempIndex)); 	      
+ 	       append(String.format("%1s NOOP", label2));	    
+ 	       return new ExpressionResult(operand1Expression.type,resultTempIndex);
 	   }
 
 	   /**
