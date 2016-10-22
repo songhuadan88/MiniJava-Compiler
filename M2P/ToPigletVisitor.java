@@ -828,8 +828,10 @@ public class ToPigletVisitor extends GJDepthFirst<Object,Object>{
 	      List<String> methodIdentifier = ordinaryClass.GetMethodIdentifier();
 	      for(int i=0;i<methodIdentifier.size();i++)
 	      {
-	    	  String iden= methodIdentifier.get(i);	    	 
-	    	  append(String.format("HSTORE TEMP %1d %2d ",middleValueTempIndex1,4*i,ordinaryClass.name)+iden);
+	    	  String iden= methodIdentifier.get(i);
+	    	  int methodNameTempIndex=methodArgu.newTemp();
+	    	  append(String.format("MOVE TEMP %1d ",methodNameTempIndex)+iden);
+	    	  append(String.format("HSTORE TEMP %1d %2d TEMP %3d",middleValueTempIndex1,4*i,methodNameTempIndex));
 	      }
 	      append(String.format("HSTORE TEMP %1d 0 TEMP %2d",middleValueTempIndex2,middleValueTempIndex1));	      
 	      return new ExpressionResult(new VariableType(FourType.Object,className),middleValueTempIndex2);
