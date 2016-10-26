@@ -1,4 +1,5 @@
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
 
 import syntaxtree.Node;
 import visitor.GJVisitor;
@@ -11,9 +12,7 @@ public class M2P {
 	 * @throws ParseException 
 	 */
 	public static void main(String[] args) throws FileNotFoundException, ParseException {
-		String s1="a_b";
-		String s2=String.format("%1s", s1);
-		
+
 		// TODO Auto-generated method stub
 		new MiniJavaParser(new java.io.FileInputStream(args[0]));
 		Node root = MiniJavaParser.Goal();
@@ -21,8 +20,10 @@ public class M2P {
 		root.accept(visitor,null);
 				
 		ToPigletVisitor visitor1=new ToPigletVisitor();
-		root.accept(visitor1,null);
-		System.out.println(visitor1.pigletString);		
+		root.accept(visitor1,null);		
+		java.io.PrintWriter fileWrite=new java.io.PrintWriter(args[1]);
+		fileWrite.println(visitor1.pigletString);
+		fileWrite.close();
 	}
 
 }

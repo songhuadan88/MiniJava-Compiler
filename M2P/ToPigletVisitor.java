@@ -845,8 +845,10 @@ public class ToPigletVisitor extends GJDepthFirst<Object,Object>{
 	      n.f0.accept(this, argu);	      
 	      ExpressionResult operandExpression=(ExpressionResult)n.f1.accept(this, argu);
 	      MethodArgument methodArgu=(MethodArgument)argu; 
+	      int oneTempIndex=methodArgu.newTemp();
 	      int resultTempIndex=methodArgu.newTemp();
-	      append(String.format("MOVE TEMP %1d MINUS 1 TEMP %2d",resultTempIndex,operandExpression.tempIndex));	      
+	      append(String.format("MOVE TEMP %1d 1",oneTempIndex));
+	      append(String.format("MOVE TEMP %1d MINUS TEMP %2d TEMP %3d",resultTempIndex, oneTempIndex,operandExpression.tempIndex));	      
 	      return new ExpressionResult(new VariableType(FourType.Boolean),resultTempIndex);
 	   }
 
