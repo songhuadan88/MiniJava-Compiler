@@ -14,3 +14,20 @@ If a class has n variables, then it should allocate 4n+4 bytes.
 The first 4 bytes are used to store the list of functions, and others are used to store variables.
 TEMP 1-20 is used to be the varaibles of functions.
 TEMP is considered local variable inside a function.
+
+Kanga:
+label are now global
+24 global registers:
+a0-a3 parameter
+v0 return value
+v1 temporary values when loading from stack
+s0-s7 t0-t9 general use
+
+ASTORE ALOAD interact with stack
+PASSARG to make more than 4 parameters viable
+
+Procedures have three integers in its head
+the first is the number of parameters
+the second is the maximum of numbers that the procedure may use the stack
+the third is the maximum of numbers of parameters of the producers that this producer may call
+
