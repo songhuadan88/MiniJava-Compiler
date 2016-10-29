@@ -30,9 +30,14 @@ public class SPigletTable {
 		return null;
 	}
 	
-	static void Func()
+	static void Print()
 	{
-		
+		System.out.println(String.format("Totally %1d procedure.",allProcedure.size()));
+		for(SPigletProcedure procedure : allProcedure)
+		{
+			System.out.println();
+			procedure.Print();
+		}
 	}
 }
 
@@ -65,16 +70,36 @@ class SPigletProcedure
 			return maxTemp-13;
 		}		
 	}
+	
+	public void Print()
+	{
+		System.out.println(String.format("Procedure %1s, parameter %2d, maxtemp %3d",name,numberOfParameter,maxTemp));
+		for(SPigletStatement statement : allStatement)
+		{
+			statement.Print();
+		}
+	}
 }
 
 class SPigletStatement
 {
 	boolean hasLabel=false;
 	String label="";
+	boolean canJump=false;
+	String jumpToLabel="";
 	
 	List<Integer> assignedTemp=new ArrayList<Integer>();
 	List<Integer> accessedTemp=new ArrayList<Integer>();
 	
-	
+	public void Print()
+	{
+		if(hasLabel)
+			System.out.print("With label: "+label);
+		else
+			System.out.print("No label.");
+		System.out.print(" Accessed: "+accessedTemp.toString());
+		System.out.print(" Assigned: "+assignedTemp.toString());
+		System.out.println();
+	}
 	
 }

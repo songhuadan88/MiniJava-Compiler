@@ -1,3 +1,7 @@
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.List;
+
 import syntaxtree.BinOp;
 import syntaxtree.CJumpStmt;
 import syntaxtree.Call;
@@ -12,6 +16,10 @@ import syntaxtree.JumpStmt;
 import syntaxtree.Label;
 import syntaxtree.MoveStmt;
 import syntaxtree.NoOpStmt;
+import syntaxtree.Node;
+import syntaxtree.NodeListOptional;
+import syntaxtree.NodeOptional;
+import syntaxtree.NodeSequence;
 import syntaxtree.Operator;
 import syntaxtree.PrintStmt;
 import syntaxtree.Procedure;
@@ -25,6 +33,51 @@ import visitor.GJDepthFirst;
 
 public class BuildSymbolTableVisitor extends GJDepthFirst<Object,Object>
 {
+
+	   public Object visit(NodeOptional n, Object argu) {
+	      if ( n.present() )
+	         return n.node.accept(this,argu);
+	      else
+	         return null;
+	   }
+
+
+	   public Object visit(NodeListOptional n, Object argu) {
+		   List<Object> _ret=new ArrayList<Object>();
+		   if ( n.present() ) {
+	         
+	         int _count=0;
+	         for ( Enumeration<Node> e = n.elements(); e.hasMoreElements(); ) {
+	            Object elementRet = e.nextElement().accept(this,argu);
+	            _ret.add(elementRet);
+	            _count++;
+	         }
+	         return _ret;
+	      }
+	      else
+	         return _ret;
+	   }
+
+	   public Object visit(NodeSequence n, Object argu) {
+	      
+		   
+		   SPigletStatement statement=null;
+		   String label=null;
+	      int _count=0;
+	      for ( Enumeration<Node> e = n.elements(); e.hasMoreElements(); ) {
+	         if(_count==0)
+	    	  label = (String)e.nextElement().accept(this,argu);
+	         else if(_count==1)
+	        	 statement=(SPigletStatement)e.nextElement().accept(this,argu);
+	         _count++;
+	      }
+	      if(label!=null)
+	    	 {
+	    	  statement.hasLabel=true;
+	    	  statement.label=label;
+	    	 }
+	      return statement;
+	   }
 
 	   /**
 	    * f0 -> "MAIN"
@@ -85,7 +138,7 @@ public class BuildSymbolTableVisitor extends GJDepthFirst<Object,Object>
 	    */
 	   public Object visit(Stmt n, Object argu) {
 	      Object _ret=null;
-	      n.f0.accept(this, argu);
+	      _ret = n.f0.accept(this, argu);
 	      return _ret;
 	   }
 
@@ -93,18 +146,17 @@ public class BuildSymbolTableVisitor extends GJDepthFirst<Object,Object>
 	    * f0 -> "NOOP"
 	    */
 	   public Object visit(NoOpStmt n, Object argu) {
-	      Object _ret=null;
 	      n.f0.accept(this, argu);
-	      return _ret;
+	      return new SPigletStatement();
 	   }
 
 	   /**
 	    * f0 -> "ERROR"
 	    */
 	   public Object visit(ErrorStmt n, Object argu) {
-	      Object _ret=null;
+	      
 	      n.f0.accept(this, argu);
-	      return _ret;
+	      return new SPigletStatement();
 	   }
 
 	   /**
@@ -113,11 +165,15 @@ public class BuildSymbolTableVisitor extends GJDepthFirst<Object,Object>
 	    * f2 -> Label()
 	    */
 	   public Object visit(CJumpStmt n, Object argu) {
-	      Object _ret=null;
+	      
 	      n.f0.accept(this, argu);
-	      n.f1.accept(this, argu);
-	      n.f2.accept(this, argu);
-	      return _ret;
+	      int tempIndex=(Integer)n.f1.accept(this, argu);
+	      String label=(String)n.f2.accept(this, argu);
+	      SPigletStatement statement=new SPigletStatement();
+	      statement.accessedTemp.add(tempIndex);
+	      statement.canJump=true;
+	      statement.jumpToLabel=label;
+	      return statement;
 	   }
 
 	   /**
@@ -125,10 +181,13 @@ public class BuildSymbolTableVisitor extends GJDepthFirst<Object,Object>
 	    * f1 -> Label()
 	    */
 	   public Object visit(JumpStmt n, Object argu) {
-	      Object _ret=null;
+	      
 	      n.f0.accept(this, argu);
-	      n.f1.accept(this, argu);
-	      return _ret;
+	      String label=(String)n.f1.accept(this, argu);
+	      SPigletStatement statement=new SPigletStatement();	      
+	      statement.canJump=true;
+	      statement.jumpToLabel=label;
+	      return statement;
 	   }
 
 	   /**
@@ -138,12 +197,15 @@ public class BuildSymbolTableVisitor extends GJDepthFirst<Object,Object>
 	    * f3 -> Temp()
 	    */
 	   public Object visit(HStoreStmt n, Object argu) {
-	      Object _ret=null;
+	      
 	      n.f0.accept(this, argu);
-	      n.f1.accept(this, argu);
+	      int addressTemp=(Integer)n.f1.accept(this, argu);
 	      n.f2.accept(this, argu);
-	      n.f3.accept(this, argu);
-	      return _ret;
+	      int contentTemp=(Integer)n.f3.accept(this, argu);
+	      SPigletStatement statement=new SPigletStatement();
+	      statement.accessedTemp.add(addressTemp);
+	      statement.accessedTemp.add(contentTemp);
+	      return statement;
 	   }
 
 	   /**
@@ -153,12 +215,15 @@ public class BuildSymbolTableVisitor extends GJDepthFirst<Object,Object>
 	    * f3 -> IntegerLiteral()
 	    */
 	   public Object visit(HLoadStmt n, Object argu) {
-	      Object _ret=null;
+	      
 	      n.f0.accept(this, argu);
-	      n.f1.accept(this, argu);
-	      n.f2.accept(this, argu);
+	      int destTemp=(Integer)n.f1.accept(this, argu);
+	      int addressTemp=(Integer)n.f2.accept(this, argu);
 	      n.f3.accept(this, argu);
-	      return _ret;
+	      SPigletStatement statement=new SPigletStatement();
+	      statement.accessedTemp.add(addressTemp);
+	      statement.assignedTemp.add(destTemp);
+	      return statement;
 	   }
 
 	   /**
@@ -167,11 +232,14 @@ public class BuildSymbolTableVisitor extends GJDepthFirst<Object,Object>
 	    * f2 -> Exp()
 	    */
 	   public Object visit(MoveStmt n, Object argu) {
-	      Object _ret=null;
+	      
 	      n.f0.accept(this, argu);
-	      n.f1.accept(this, argu);
-	      n.f2.accept(this, argu);
-	      return _ret;
+	      int destTemp=(Integer)n.f1.accept(this, argu);
+	      List<Integer> expList=(List<Integer>) n.f2.accept(this, argu);
+	      SPigletStatement statement=new SPigletStatement();
+	      statement.accessedTemp.addAll(expList);
+	      statement.assignedTemp.add(destTemp);
+	      return statement;
 	   }
 
 	   /**
@@ -179,10 +247,12 @@ public class BuildSymbolTableVisitor extends GJDepthFirst<Object,Object>
 	    * f1 -> SimpleExp()
 	    */
 	   public Object visit(PrintStmt n, Object argu) {
-	      Object _ret=null;
+	      
 	      n.f0.accept(this, argu);
-	      n.f1.accept(this, argu);
-	      return _ret;
+	      List<Integer> expList=(List<Integer>)n.f1.accept(this, argu);
+	      SPigletStatement statement=new SPigletStatement();
+	      statement.accessedTemp.addAll(expList);	      
+	      return statement;
 	   }
 
 	   /**
@@ -193,7 +263,7 @@ public class BuildSymbolTableVisitor extends GJDepthFirst<Object,Object>
 	    */
 	   public Object visit(Exp n, Object argu) {
 	      Object _ret=null;
-	      n.f0.accept(this, argu);
+	      _ret = n.f0.accept(this, argu);
 	      return _ret;
 	   }
 
@@ -206,11 +276,15 @@ public class BuildSymbolTableVisitor extends GJDepthFirst<Object,Object>
 	    */
 	   public Object visit(StmtExp n, Object argu) {
 	      Object _ret=null;
+	      SPigletProcedure procedure=(SPigletProcedure)argu;
 	      n.f0.accept(this, argu);
 	      n.f1.accept(this, argu);
 	      n.f2.accept(this, argu);
-	      n.f3.accept(this, argu);
+	      List<Integer> retList=(List<Integer>)n.f3.accept(this, argu);
 	      n.f4.accept(this, argu);
+	      SPigletStatement statement=new SPigletStatement();
+	      statement.accessedTemp.addAll(retList);
+	      procedure.AddStatement(statement);
 	      return _ret;
 	   }
 
@@ -222,13 +296,16 @@ public class BuildSymbolTableVisitor extends GJDepthFirst<Object,Object>
 	    * f4 -> ")"
 	    */
 	   public Object visit(Call n, Object argu) {
-	      Object _ret=null;
+	      
 	      n.f0.accept(this, argu);
-	      n.f1.accept(this, argu);
+	      List<Integer> funcList=(List<Integer>)n.f1.accept(this, argu);
+	      List<Integer> callList=new ArrayList<Integer>();
+	      callList.addAll(funcList);
 	      n.f2.accept(this, argu);
-	      n.f3.accept(this, argu);
+	      List<Integer> parameterList=(List<Integer>)n.f3.accept(this, argu);
 	      n.f4.accept(this, argu);
-	      return _ret;
+	      callList.addAll(parameterList);
+	      return callList;
 	   }
 
 	   /**
@@ -236,10 +313,10 @@ public class BuildSymbolTableVisitor extends GJDepthFirst<Object,Object>
 	    * f1 -> SimpleExp()
 	    */
 	   public Object visit(HAllocate n, Object argu) {
-	      Object _ret=null;
+	      
 	      n.f0.accept(this, argu);
-	      n.f1.accept(this, argu);
-	      return _ret;
+	      return n.f1.accept(this, argu);
+	      
 	   }
 
 	   /**
@@ -248,11 +325,13 @@ public class BuildSymbolTableVisitor extends GJDepthFirst<Object,Object>
 	    * f2 -> SimpleExp()
 	    */
 	   public Object visit(BinOp n, Object argu) {
-	      Object _ret=null;
+	      List<Integer> binOpList=new ArrayList<Integer>();
 	      n.f0.accept(this, argu);
-	      n.f1.accept(this, argu);
-	      n.f2.accept(this, argu);
-	      return _ret;
+	      int op1TempIndex= (Integer)n.f1.accept(this, argu);
+	      binOpList.add(op1TempIndex);
+	      List<Integer> op2List=(List<Integer>)n.f2.accept(this, argu);
+	      binOpList.addAll(op2List);
+	      return binOpList;
 	   }
 
 	   /**
@@ -273,8 +352,12 @@ public class BuildSymbolTableVisitor extends GJDepthFirst<Object,Object>
 	    *       | Label()
 	    */
 	   public Object visit(SimpleExp n, Object argu) {
-	      Object _ret=null;
-	      n.f0.accept(this, argu);
+	      List<Integer> _ret=new ArrayList<Integer>();
+	      Object tempIndex = n.f0.accept(this, argu);
+	      if(n.f0.choice instanceof Temp)
+	      {
+	    	  _ret.add((Integer)tempIndex);
+	      }
 	      return _ret;
 	   }
 
@@ -283,13 +366,13 @@ public class BuildSymbolTableVisitor extends GJDepthFirst<Object,Object>
 	    * f1 -> IntegerLiteral()
 	    */
 	   public Object visit(Temp n, Object argu) {
-	      Object _ret=null;
+	      
 	      n.f0.accept(this, argu);
 	      SPigletProcedure procedure=(SPigletProcedure)argu;
 	      int tempIndex= (Integer)n.f1.accept(this, argu);
 	      if(tempIndex>procedure.maxTemp)
 	    	  procedure.maxTemp=tempIndex;
-	      return _ret;
+	      return tempIndex;
 	   }
 
 	   /**
