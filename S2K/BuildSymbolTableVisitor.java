@@ -103,7 +103,12 @@ public class BuildSymbolTableVisitor extends GJDepthFirst<Object,Object>
 	    */
 	   public Object visit(StmtList n, Object argu) {
 	      Object _ret=null;
-	      n.f0.accept(this, argu);
+	      List<SPigletStatement> allStatement = (List<SPigletStatement>) n.f0.accept(this, argu);
+	      SPigletProcedure procedure=(SPigletProcedure)argu;
+	      for(SPigletStatement statement : allStatement)
+	      {
+	    	  procedure.AddStatement(statement);
+	      }
 	      return _ret;
 	   }
 

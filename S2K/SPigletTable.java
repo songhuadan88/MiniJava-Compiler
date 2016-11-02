@@ -73,7 +73,7 @@ class SPigletProcedure
 	
 	public void Print()
 	{
-		System.out.println(String.format("Procedure %1s, parameter %2d, maxtemp %3d",name,numberOfParameter,maxTemp));
+		System.out.println(String.format("Procedure %1s, parameter %2d, maxtemp %3d, with %4d statements",name,numberOfParameter,maxTemp,allStatement.size()));
 		for(SPigletStatement statement : allStatement)
 		{
 			statement.Print();
@@ -97,6 +97,10 @@ class SPigletStatement
 			System.out.print("With label: "+label);
 		else
 			System.out.print("No label.");
+		if(canJump)
+			System.out.print("May jump to "+jumpToLabel);
+		else
+			System.out.print("Will not jump.");
 		System.out.print(" Accessed: "+accessedTemp.toString());
 		System.out.print(" Assigned: "+assignedTemp.toString());
 		System.out.println();
