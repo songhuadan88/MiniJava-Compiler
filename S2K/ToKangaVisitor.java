@@ -1,4 +1,7 @@
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Enumeration;
+import java.util.List;
 
 import syntaxtree.BinOp;
 import syntaxtree.CJumpStmt;
@@ -14,6 +17,10 @@ import syntaxtree.JumpStmt;
 import syntaxtree.Label;
 import syntaxtree.MoveStmt;
 import syntaxtree.NoOpStmt;
+import syntaxtree.Node;
+import syntaxtree.NodeListOptional;
+import syntaxtree.NodeOptional;
+import syntaxtree.NodeSequence;
 import syntaxtree.Operator;
 import syntaxtree.PrintStmt;
 import syntaxtree.Procedure;
@@ -29,15 +36,96 @@ public class ToKangaVisitor extends GJDepthFirst<Object,Object>
 {
 	String kangaString = "";
 	int currentTab=0;	
+	boolean hasGotTab=false;
 	
-
+	void GetTab()
+	{
+		if(!hasGotTab)
+		{
+			hasGotTab=true;
+			char[] chars = new char[currentTab];
+			Arrays.fill(chars, '\t');
+			kangaString+=new String(chars);
+		}
+	}
+	
+	void appendNoNewLine(String str)
+	{
+		GetTab();
+		kangaString+=str+" ";
+	}
+	
 	void append(String str)
 	{
-		char[] chars = new char[currentTab];
-		Arrays.fill(chars, '\t');
-		kangaString+=new String(chars)+str+"\n";
+		GetTab();
+		kangaString+=str+"\n";
+		hasGotTab=false;
 	}
 
+
+		   public Object visit(NodeListOptional n, Object argu) {			   
+			   if ( n.present() ) {		         
+		         int _count=0;
+		         for ( Enumeration<Node> e = n.elements(); e.hasMoreElements(); ) {
+		            Object elementRet = e.nextElement().accept(this,argu);
+		            if(elementRet instanceof SPigletStatement) // returned by a statement
+		            {
+		            	ProcedureArgument procedureArgu=(ProcedureArgument)argu;
+		            	procedureArgu.currentStatementIndex++;
+		            }
+		            else if(elementRet instanceof Integer) // returned by Temp as parameters of method
+		            {
+		            	MethodArgument methodArgu=(MethodArgument)argu;
+		            	int tempIndex=(Integer)elementRet;
+		            	String addrTempStr= GetExpressionStringForTemp(methodArgu.procedureArgu,tempIndex,"v0");
+		            	if(methodArgu.currentParameterIndex<4)
+		            	{
+		            		append(String.format("MOVE a%d %s",methodArgu.currentParameterIndex,addrTempStr));
+		            	}
+		            	else
+		            	{
+		            		append(String.format("PASSARG %d %s",methodArgu.currentParameterIndex-3,addrTempStr));
+		            	}
+		            	methodArgu.currentParameterIndex++;
+		            }
+		            _count++;
+		         }		        
+		      }
+		      return null;
+		         
+		   }
+
+		   public Object visit(NodeSequence n, Object argu) {		
+		      int _count=0;
+		      for ( Enumeration<Node> e = n.elements(); e.hasMoreElements(); ) {
+		         if(_count==0)
+		         {
+		    	   String label = (String)e.nextElement().accept(this,argu);
+		    	   if(label!=null)
+		    	   {
+		    		   appendNoNewLine(label);
+		    	   }
+		         }
+		         else
+		        	 e.nextElement().accept(this,argu);
+		         _count++;
+		      }
+		      return null;
+		   }
+
+	String GetExpressionStringForTemp(ProcedureArgument procedureArgu, int tempIndex, String preferredReg)
+	{
+		String tempStr="";
+  	  TempStorePosition storePosition=procedureArgu.procedure.GetStorePosition(tempIndex,procedureArgu.currentStatementIndex); 
+  	  if(storePosition.type==StorePositionType.REGISTER)
+  		tempStr=storePosition.registerName;
+  	  else
+  	  {
+  		  append(String.format("ALOAD %s SPILLEDARG %d",preferredReg,storePosition.stackIndex));
+  		tempStr=preferredReg;
+  	  }
+  	  return tempStr;
+	}
 	   /**
 	    * f0 -> "MAIN"
 	    * f1 -> StmtList()
@@ -48,10 +136,11 @@ public class ToKangaVisitor extends GJDepthFirst<Object,Object>
 	   public Object visit(Goal n, Object argu) {
 	      Object _ret=null;
 	      SPigletProcedure procedure=SPigletTable.SearchProcedure("MAIN");
-	      append(String.format("MAIN [0][%1d][%2d]",procedure.NeededStackSpace(),SPigletTable.MaximumOfProcedureParameter()));
+	      ProcedureArgument procedureArgu=new ProcedureArgument(procedure);
+	      append(String.format("MAIN [0][%d][%d]",procedure.NeededStackSpace(),SPigletTable.MaximumOfProcedureParameter()));
 	      currentTab ++;
 	      n.f0.accept(this, argu);
-	      n.f1.accept(this, procedure);
+	      n.f1.accept(this, procedureArgu);
 	      n.f2.accept(this, argu);
 	      currentTab--;
 	      append("END");
@@ -66,7 +155,7 @@ public class ToKangaVisitor extends GJDepthFirst<Object,Object>
 	   public Object visit(StmtList n, Object argu) {
 	      Object _ret=null;
 	      n.f0.accept(this, argu);
-	      return _ret;
+	      return new SPigletStatement();
 	   }
 
 	   /**
@@ -83,9 +172,10 @@ public class ToKangaVisitor extends GJDepthFirst<Object,Object>
 	      n.f2.accept(this, argu);
 	      n.f3.accept(this, argu);
 	      SPigletProcedure procedure=SPigletTable.SearchProcedure(procedureName);
-	      append(String.format("%1s [%2d][%3d][%4d]",procedureName,procedure.numberOfParameter,procedure.NeededStackSpace(),SPigletTable.MaximumOfProcedureParameter()));
+	      ProcedureArgument procedureArgu=new ProcedureArgument(procedure);
+	      append(String.format("%s [%d][%d][%d]",procedureName,procedure.numberOfParameter,procedure.NeededStackSpace(),SPigletTable.MaximumOfProcedureParameter()));
 	      currentTab++;
-	      n.f4.accept(this, procedure);
+	      n.f4.accept(this, procedureArgu);
 	      currentTab--;
 	      append("END");
 	      return _ret;
@@ -111,18 +201,18 @@ public class ToKangaVisitor extends GJDepthFirst<Object,Object>
 	    * f0 -> "NOOP"
 	    */
 	   public Object visit(NoOpStmt n, Object argu) {
-	      Object _ret=null;
 	      n.f0.accept(this, argu);
-	      return _ret;
+	      append("NOOP");
+	      return null;
 	   }
 
 	   /**
 	    * f0 -> "ERROR"
 	    */
 	   public Object visit(ErrorStmt n, Object argu) {
-	      Object _ret=null;
 	      n.f0.accept(this, argu);
-	      return _ret;
+	      append("ERROR");
+	      return null;
 	   }
 
 	   /**
@@ -131,22 +221,24 @@ public class ToKangaVisitor extends GJDepthFirst<Object,Object>
 	    * f2 -> Label()
 	    */
 	   public Object visit(CJumpStmt n, Object argu) {
-	      Object _ret=null;
+		   ProcedureArgument procedureArgu=(ProcedureArgument)argu;
 	      n.f0.accept(this, argu);
-	      n.f1.accept(this, argu);
-	      n.f2.accept(this, argu);
-	      return _ret;
+	      int opTempIndex=(Integer)n.f1.accept(this, argu);	      
+	      String label=(String)n.f2.accept(this, argu);
+	      String opTempStr=GetExpressionStringForTemp(procedureArgu,opTempIndex,"v1");
+	      append(String.format("CJUMP %s %s",opTempStr, label));
+	      return null;
 	   }
 
 	   /**
 	    * f0 -> "JUMP"
 	    * f1 -> Label()
 	    */
-	   public Object visit(JumpStmt n, Object argu) {
-	      Object _ret=null;
+	   public Object visit(JumpStmt n, Object argu) {	      
 	      n.f0.accept(this, argu);
-	      n.f1.accept(this, argu);
-	      return _ret;
+	      String label=(String)n.f1.accept(this, argu);
+	      append(String.format("JUMP %s",label));
+	      return null;
 	   }
 
 	   /**
@@ -156,12 +248,15 @@ public class ToKangaVisitor extends GJDepthFirst<Object,Object>
 	    * f3 -> Temp()
 	    */
 	   public Object visit(HStoreStmt n, Object argu) {
-	      Object _ret=null;
+		   ProcedureArgument procedureArgu=(ProcedureArgument)argu;
 	      n.f0.accept(this, argu);
-	      n.f1.accept(this, argu);
-	      n.f2.accept(this, argu);
-	      n.f3.accept(this, argu);
-	      return _ret;
+	      int addrTempIndex=(Integer)n.f1.accept(this, argu);
+	      int offset=(Integer)n.f2.accept(this, argu);
+	      int sourceTempIndex =(Integer)n.f3.accept(this, argu);
+	      String addrTempStr= GetExpressionStringForTemp(procedureArgu,addrTempIndex,"v1");
+	      String sourceTempStr=GetExpressionStringForTemp(procedureArgu,sourceTempIndex,"v0");
+	      append(String.format("HSTORE %s %d %s",addrTempStr,offset,sourceTempStr));
+	      return null;
 	   }
 
 	   /**
@@ -171,12 +266,21 @@ public class ToKangaVisitor extends GJDepthFirst<Object,Object>
 	    * f3 -> IntegerLiteral()
 	    */
 	   public Object visit(HLoadStmt n, Object argu) {
-	      Object _ret=null;
+		   ProcedureArgument procedureArgu=(ProcedureArgument)argu;
 	      n.f0.accept(this, argu);
-	      n.f1.accept(this, argu);
-	      n.f2.accept(this, argu);
-	      n.f3.accept(this, argu);
-	      return _ret;
+	      int destTempIndex = (Integer)n.f1.accept(this, argu);
+	      int addrTempIndex =(Integer)n.f2.accept(this, argu);
+	      int offset =(Integer)n.f3.accept(this, argu);
+	      String addrTempStr= GetExpressionStringForTemp(procedureArgu,addrTempIndex,"v1");	      
+	      TempStorePosition storePosition=procedureArgu.procedure.GetStorePosition(destTempIndex,procedureArgu.currentStatementIndex); 
+	  	  if(storePosition.type==StorePositionType.REGISTER)
+	  		  append(String.format("HLOAD %s %s %d",storePosition.registerName,addrTempStr,offset));
+	  	  else
+	  	  {
+	  		  append(String.format("HLOAD %s %s %d","v0",addrTempStr,offset));
+	  		  append(String.format("ASTORE SPILLEDARG %d %s",storePosition.stackIndex,"v0" ));
+	  	  }
+	      return null;
 	   }
 
 	   /**
@@ -185,22 +289,31 @@ public class ToKangaVisitor extends GJDepthFirst<Object,Object>
 	    * f2 -> Exp()
 	    */
 	   public Object visit(MoveStmt n, Object argu) {
-	      Object _ret=null;
-	      n.f0.accept(this, argu);
-	      n.f1.accept(this, argu);
-	      n.f2.accept(this, argu);
-	      return _ret;
+	      ProcedureArgument procedureArgu=(ProcedureArgument)argu;
+	      n.f0.accept(this, argu);	      
+	      int tempIndex=(Integer)n.f1.accept(this, argu);
+	      String expStr=(String)n.f2.accept(this, argu);
+	      
+	      TempStorePosition storePosition=procedureArgu.procedure.GetStorePosition(tempIndex,procedureArgu.currentStatementIndex); 
+	  	  if(storePosition.type==StorePositionType.REGISTER)
+	  		  append(String.format("MOVE %s %s",storePosition.registerName,expStr));
+	  	  else
+	  	  {
+	  		  append(String.format("MOVE %s %s","v1",expStr));
+	  		  append(String.format("ASTORE SPILLEDARG %d %s",storePosition.stackIndex,"v1" ));
+	  	  }
+	      return null;
 	   }
 
 	   /**
 	    * f0 -> "PRINT"
 	    * f1 -> SimpleExp()
 	    */
-	   public Object visit(PrintStmt n, Object argu) {
-	      Object _ret=null;
+	   public Object visit(PrintStmt n, Object argu) {	      
 	      n.f0.accept(this, argu);
-	      n.f1.accept(this, argu);
-	      return _ret;
+	      String expStr=(String)n.f1.accept(this, argu);
+	      append(String.format("PRINT %s",expStr));
+	      return null;
 	   }
 
 	   /**
@@ -211,7 +324,7 @@ public class ToKangaVisitor extends GJDepthFirst<Object,Object>
 	    */
 	   public Object visit(Exp n, Object argu) {
 	      Object _ret=null;
-	      n.f0.accept(this, argu);
+	      _ret = n.f0.accept(this, argu);
 	      return _ret;
 	   }
 
@@ -227,8 +340,9 @@ public class ToKangaVisitor extends GJDepthFirst<Object,Object>
 	      n.f0.accept(this, argu);
 	      n.f1.accept(this, argu);
 	      n.f2.accept(this, argu);
-	      n.f3.accept(this, argu);
+	      String expStr =(String)n.f3.accept(this, argu);
 	      n.f4.accept(this, argu);
+	      append(String.format("MOVE v0 %s",expStr));
 	      return _ret;
 	   }
 
@@ -240,24 +354,25 @@ public class ToKangaVisitor extends GJDepthFirst<Object,Object>
 	    * f4 -> ")"
 	    */
 	   public Object visit(Call n, Object argu) {
-	      Object _ret=null;
+		   ProcedureArgument procedureArgu=(ProcedureArgument)argu;
 	      n.f0.accept(this, argu);
-	      n.f1.accept(this, argu);
+	      String expStr=(String)n.f1.accept(this, argu);
+	      MethodArgument methodArgu=new MethodArgument(procedureArgu);
 	      n.f2.accept(this, argu);
-	      n.f3.accept(this, argu);
+	      n.f3.accept(this, methodArgu);
 	      n.f4.accept(this, argu);
-	      return _ret;
+	      append("CALL "+expStr);	      
+	      return "v0";
 	   }
 
 	   /**
 	    * f0 -> "HALLOCATE"
 	    * f1 -> SimpleExp()
 	    */
-	   public Object visit(HAllocate n, Object argu) {
-	      Object _ret=null;
+	   public Object visit(HAllocate n, Object argu) {	      
 	      n.f0.accept(this, argu);
-	      n.f1.accept(this, argu);
-	      return _ret;
+	      String expStr=(String)n.f1.accept(this, argu);
+	      return String.format("HALLOCATE %s",expStr);
 	   }
 
 	   /**
@@ -266,11 +381,12 @@ public class ToKangaVisitor extends GJDepthFirst<Object,Object>
 	    * f2 -> SimpleExp()
 	    */
 	   public Object visit(BinOp n, Object argu) {
-	      Object _ret=null;
-	      n.f0.accept(this, argu);
-	      n.f1.accept(this, argu);
-	      n.f2.accept(this, argu);
-	      return _ret;
+	      
+	      String operator = (String)n.f0.accept(this, argu);
+	      int op1Index = (Integer)n.f1.accept(this, argu);
+	      String op2Str = (String)n.f2.accept(this, argu);
+	      String op1Str= GetExpressionStringForTemp((ProcedureArgument)argu,op1Index,"v0");	      
+	      return String.format("%s %s %s",operator,op1Str,op2Str);
 	   }
 
 	   /**
@@ -280,9 +396,8 @@ public class ToKangaVisitor extends GJDepthFirst<Object,Object>
 	    *       | "TIMES"
 	    */
 	   public Object visit(Operator n, Object argu) {
-	      Object _ret=null;
 	      n.f0.accept(this, argu);
-	      return _ret;
+	      return n.f0.choice.toString();
 	   }
 
 	   /**
@@ -290,21 +405,32 @@ public class ToKangaVisitor extends GJDepthFirst<Object,Object>
 	    *       | IntegerLiteral()
 	    *       | Label()
 	    */
-	   public Object visit(SimpleExp n, Object argu) {
-	      Object _ret=null;
-	      n.f0.accept(this, argu);
-	      return _ret;
+	   public Object visit(SimpleExp n, Object argu) {	      
+	      Object ret = n.f0.accept(this, argu);
+	      ProcedureArgument procedureArgu=(ProcedureArgument)argu;
+	      if(n.f0.choice instanceof Temp)
+	      {
+	    	  ret=GetExpressionStringForTemp(procedureArgu,(Integer)ret,"v1");
+	      }
+	      else if(n.f0.choice instanceof IntegerLiteral)
+	      {
+	    	  ret=ret.toString();
+	      }
+	      else if(n.f0.choice instanceof Label)
+	      {
+	    	  
+	      }
+	      return ret;
 	   }
 
 	   /**
 	    * f0 -> "TEMP"
 	    * f1 -> IntegerLiteral()
 	    */
-	   public Object visit(Temp n, Object argu) {
-	      Object _ret=null;
+	   public Object visit(Temp n, Object argu) {	      
 	      n.f0.accept(this, argu);
-	      n.f1.accept(this, argu);
-	      return _ret;
+	      Integer index=(Integer)n.f1.accept(this, argu);
+	      return index;
 	   }
 
 	   /**
@@ -319,7 +445,29 @@ public class ToKangaVisitor extends GJDepthFirst<Object,Object>
 	    * f0 -> <IDENTIFIER>
 	    */
 	   public Object visit(Label n, Object argu) {	  
-	      n.f0.accept(this, argu);
+	      n.f0.accept(this, argu);	      
 	      return n.f0.toString();
 	   }
+}
+
+class ProcedureArgument
+{
+	SPigletProcedure procedure;
+	int currentStatementIndex=0;
+	
+	public ProcedureArgument(SPigletProcedure _procedure)
+	{
+		procedure=_procedure;
+	}
+}
+
+class MethodArgument
+{
+	ProcedureArgument procedureArgu;
+	int currentParameterIndex=0;
+	
+	public MethodArgument(ProcedureArgument _procedureArgu)
+	{
+		procedureArgu=_procedureArgu;
+	}
 }

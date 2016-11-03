@@ -32,7 +32,7 @@ public class SPigletTable {
 	
 	static void Print()
 	{
-		System.out.println(String.format("Totally %1d procedure.",allProcedure.size()));
+		System.out.println(String.format("Totally %d procedure.",allProcedure.size()));
 		for(SPigletProcedure procedure : allProcedure)
 		{
 			System.out.println();
@@ -60,20 +60,69 @@ class SPigletProcedure
 		allStatement.add(statement);
 	}
 
-	public int NeededStackSpace() {
+	public int NeededStackSpace() 
+	{
 		if(numberOfParameter <= 4)
 		{
-			return maxTemp-numberOfParameter-9;
+			return Math.max(0,  maxTemp-numberOfParameter-9);
 		}
 		else
 		{
-			return maxTemp-13;
+			return Math.max(0, maxTemp-13);
 		}		
+	}
+	
+	public TempStorePosition GetStorePosition(int tempIndex, int statementIndex)
+	{
+		TempStorePosition storePosition=new TempStorePosition();
+		if(numberOfParameter > 4)
+		{
+			if(tempIndex<=3)
+			{
+				storePosition.type=StorePositionType.REGISTER;
+				storePosition.registerName="a"+tempIndex;
+			}
+			else if(tempIndex < numberOfParameter)
+			{
+				storePosition.type=StorePositionType.STACK;
+				storePosition.stackIndex=tempIndex -4;				
+			}
+			else if (tempIndex<=numberOfParameter+9)
+			{
+				storePosition.type=StorePositionType.REGISTER;
+				storePosition.registerName="t"+(tempIndex-numberOfParameter);
+			}
+			else
+			{
+				storePosition.type=StorePositionType.STACK;
+				storePosition.stackIndex=tempIndex - 14;	
+			}
+		}
+		else
+		{
+			if(tempIndex<numberOfParameter)
+			{
+				storePosition.type=StorePositionType.REGISTER;
+				storePosition.registerName="a"+tempIndex;
+			}
+			else if(tempIndex<=numberOfParameter+9)
+			{
+				storePosition.type=StorePositionType.REGISTER;
+				storePosition.registerName="t"+(tempIndex-numberOfParameter);
+			}
+			else
+			{
+				storePosition.type=StorePositionType.STACK;
+				storePosition.stackIndex=tempIndex - 10 - numberOfParameter;	
+			}
+		}
+		
+		return storePosition;
 	}
 	
 	public void Print()
 	{
-		System.out.println(String.format("Procedure %1s, parameter %2d, maxtemp %3d, with %4d statements",name,numberOfParameter,maxTemp,allStatement.size()));
+		System.out.println(String.format("Procedure %s, parameter %d, maxtemp %d, with %d statements",name,numberOfParameter,maxTemp,allStatement.size()));
 		for(SPigletStatement statement : allStatement)
 		{
 			statement.Print();
@@ -107,3 +156,14 @@ class SPigletStatement
 	}
 	
 }
+
+enum StorePositionType{REGISTER,STACK}
+class TempStorePosition
+{
+	StorePositionType type;
+	String registerName;
+	int stackIndex;
+}
+
+
+

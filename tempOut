@@ -1,5 +1,37 @@
-MAIN [0][-1][ 2]
+MAIN [0][0][2]
+	MOVE t2 HALLOCATE 4
+	MOVE t3 HALLOCATE 4
+	MOVE t4 Fac_ComputeFac
+	HSTORE t2 0 t4
+	HSTORE t3 0 t2
+	MOVE t5 10
+	HLOAD t6 t3 0
+	HLOAD t7 t6 0
+	MOVE a0 t3
+	MOVE a1 t5
+	CALL t7
+	MOVE t8 v0
+	PRINT t8
 END
-Fac_ComputeFac [ 2][  0][   2]
+Fac_ComputeFac [2][0][2]
+	MOVE t1 1
+	MOVE t2 LT a1 t1
+	CJUMP t2 L1
+	MOVE t3 1
+	MOVE t0 t3
+	JUMP L2
+	L1 NOOP
+	MOVE t4 1
+	MOVE t5 MINUS a1 t4
+	HLOAD t6 a0 0
+	HLOAD t7 t6 0
+	MOVE a0 a0
+	MOVE a1 t5
+	CALL t7
+	MOVE t8 v0
+	MOVE t9 TIMES a1 t8
+	MOVE t0 t9
+	L2 NOOP
+	MOVE v0 t0
 END
 
