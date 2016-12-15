@@ -62,62 +62,66 @@ class SPigletProcedure
 
 	public int NeededStackSpace() 
 	{
-		if(numberOfParameter <= 4)
-		{
-			return Math.max(0,  maxTemp-numberOfParameter-9);
-		}
-		else
-		{
-			return Math.max(0, maxTemp-13);
-		}		
+		return maxTemp+10;
+//		if(numberOfParameter <= 4)
+//		{
+//			return Math.max(0,  maxTemp-numberOfParameter-9);
+//		}
+//		else
+//		{
+//			return Math.max(0, maxTemp-13);
+//		}		
 	}
 	
 	public TempStorePosition GetStorePosition(int tempIndex, int statementIndex)
 	{
 		TempStorePosition storePosition=new TempStorePosition();
-		if(numberOfParameter > 4)
-		{
-			if(tempIndex<=3)
-			{
-				storePosition.type=StorePositionType.REGISTER;
-				storePosition.registerName="a"+tempIndex;
-			}
-			else if(tempIndex < numberOfParameter)
-			{
-				storePosition.type=StorePositionType.STACK;
-				storePosition.stackIndex=tempIndex -4;				
-			}
-			else if (tempIndex<=numberOfParameter+9)
-			{
-				storePosition.type=StorePositionType.REGISTER;
-				storePosition.registerName="t"+(tempIndex-numberOfParameter);
-			}
-			else
-			{
-				storePosition.type=StorePositionType.STACK;
-				storePosition.stackIndex=tempIndex - 14;	
-			}
-		}
-		else
-		{
-			if(tempIndex<numberOfParameter)
-			{
-				storePosition.type=StorePositionType.REGISTER;
-				storePosition.registerName="a"+tempIndex;
-			}
-			else if(tempIndex<=numberOfParameter+9)
-			{
-				storePosition.type=StorePositionType.REGISTER;
-				storePosition.registerName="t"+(tempIndex-numberOfParameter);
-			}
-			else
-			{
-				storePosition.type=StorePositionType.STACK;
-				storePosition.stackIndex=tempIndex - 10 - numberOfParameter;	
-			}
-		}
-		
+		storePosition.type=StorePositionType.STACK;
+		storePosition.stackIndex=tempIndex;
 		return storePosition;
+//		if(numberOfParameter > 4)
+//		{
+//			if(tempIndex<=3)
+//			{
+//				storePosition.type=StorePositionType.REGISTER;
+//				storePosition.registerName="a"+tempIndex;
+//			}
+//			else if(tempIndex < numberOfParameter)
+//			{
+//				storePosition.type=StorePositionType.STACK;
+//				storePosition.stackIndex=tempIndex -4;				
+//			}
+//			else if (tempIndex<=numberOfParameter+9)
+//			{
+//				storePosition.type=StorePositionType.REGISTER;
+//				storePosition.registerName="t"+(tempIndex-numberOfParameter);
+//			}
+//			else
+//			{
+//				storePosition.type=StorePositionType.STACK;
+//				storePosition.stackIndex=tempIndex - 14;	
+//			}
+//		}
+//		else
+//		{
+//			if(tempIndex<numberOfParameter)
+//			{
+//				storePosition.type=StorePositionType.REGISTER;
+//				storePosition.registerName="a"+tempIndex;
+//			}
+//			else if(tempIndex<=numberOfParameter+9)
+//			{
+//				storePosition.type=StorePositionType.REGISTER;
+//				storePosition.registerName="t"+(tempIndex-numberOfParameter);
+//			}
+//			else
+//			{
+//				storePosition.type=StorePositionType.STACK;
+//				storePosition.stackIndex=tempIndex - 10 - numberOfParameter;	
+//			}
+//		}
+//		
+//		return storePosition;
 	}
 	
 	public void Print()

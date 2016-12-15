@@ -7,12 +7,12 @@ Wrong returned type. Binary-tree, Linked-list
 Undefined variable. Bubble-sort 76, Tree-visitor 339
 [] only matches with Array. Line-search 37, Quicksort 42
 Left type and right type of * does not match, Factorial 13
-Number of parameters of method doea not match. Morethan4
+Number of parameters of method does not match. Morethan4
 
 Piglet:
 If a class has n variables, then it should allocate 4n+4 bytes.
 The first 4 bytes are used to store the list of functions, and others are used to store variables.
-TEMP 1-20 is used to be the varaibles of functions.
+TEMP 1-20 is used to be the variables of functions.
 TEMP is considered local variable inside a function.
 
 Kanga:
@@ -24,7 +24,10 @@ v1 temporary values when loading from stack
 s0-s7 t0-t9 general use
 
 ASTORE ALOAD interact with stack
-PASSARG to make more than 4 parameters viable
+PASSARG to make more than 4 parameters variable
+
+Variable in stack can be regarded as local,
+that is, "SPILLEDARG 0" in different procedure are different from each other
 
 Procedures have three integers in its head
 the first is the number of parameters

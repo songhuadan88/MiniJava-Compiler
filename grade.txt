@@ -1,5 +1,6 @@
 Processing Programs/BinaryTree.java ...
 convert to piglet ...
+convert to kanga ...
 run piglet ...
 16
 100000000
@@ -29,10 +30,38 @@ run piglet ...
 0
 check spiglet grammer ...
 Program parsed successfully
+run kanga ...
+16
+100000000
+8
+16
+4
+8
+12
+14
+16
+20
+24
+28
+1
+1
+1
+0
+1
+4
+8
+14
+16
+20
+24
+28
+0
+0
 
 
 Processing Programs/BubbleSort.java ...
 convert to piglet ...
+convert to kanga ...
 run piglet ...
 20
 7
@@ -58,18 +87,45 @@ run piglet ...
 0
 check spiglet grammer ...
 Program parsed successfully
+run kanga ...
+18
+18
+18
+18
+9
+9
+9
+9
+5
+5
+99999
+5
+5
+5
+5
+9
+9
+9
+9
+18
+18
+0
 
 
 Processing Programs/Factorial.java ...
 convert to piglet ...
+convert to kanga ...
 run piglet ...
 3628800
 check spiglet grammer ...
 Program parsed successfully
+run kanga ...
+3628800
 
 
 Processing Programs/LinearSearch.java ...
 convert to piglet ...
+convert to kanga ...
 run piglet ...
 10
 11
@@ -88,10 +144,27 @@ run piglet ...
 55
 check spiglet grammer ...
 Program parsed successfully
+run kanga ...
+12
+12
+12
+16
+16
+16
+16
+18
+18
+9999
+0
+1
+0
+0
+55
 
 
 Processing Programs/LinkedList.java ...
 convert to piglet ...
+convert to kanga ...
 run piglet ...
 25
 10000000
@@ -121,10 +194,38 @@ run piglet ...
 0
 check spiglet grammer ...
 Program parsed successfully
+run kanga ...
+25
+10000000
+39
+25
+10000000
+22
+39
+25
+1
+0
+10000000
+28
+22
+39
+25
+2220000
+-555
+-555
+28
+22
+25
+33300000
+22
+25
+44440000
+0
 
 
 Processing Programs/MoreThan4.java ...
 convert to piglet ...
+convert to kanga ...
 run piglet ...
 1
 2
@@ -141,10 +242,12 @@ run piglet ...
 0
 check spiglet grammer ...
 Program parsed successfully
+run kanga ...
 
 
 Processing Programs/QuickSort.java ...
 convert to piglet ...
+convert to kanga ...
 run piglet ...
 20
 7
@@ -170,10 +273,34 @@ run piglet ...
 0
 check spiglet grammer ...
 Program parsed successfully
+run kanga ...
+18
+18
+18
+18
+9
+9
+9
+9
+5
+5
+9999
+5
+5
+5
+5
+18
+18
+18
+18
+9
+9
+0
 
 
 Processing Programs/TreeVisitor.java ...
 convert to piglet ...
+convert to kanga ...
 run piglet ...
 16
 100000000
@@ -220,5 +347,49 @@ run piglet ...
 0
 check spiglet grammer ...
 Program parsed successfully
+run kanga ...
+16
+100000000
+4
+8
+12
+14
+16
+20
+24
+28
+100000000
+50000000
+333
+333
+333
+28
+24
+333
+20
+16
+333
+333
+333
+14
+12
+8
+333
+4
+100000000
+1
+1
+1
+0
+1
+4
+8
+14
+16
+20
+24
+28
+0
+0
 
 
