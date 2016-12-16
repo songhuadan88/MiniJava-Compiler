@@ -1,7 +1,52 @@
 This is a repository for MiniJava compiler.
 
-Check the bug of QuickSort
+
 Deal with MoreThan 4
 Realize MIPS
-
 Code Separation and Liveness analysis ...
+
+
+Grammar on MiniJava:
+There is only one function in the MainClass.
+There are only four types, int bool int[] Object, except the main function.
+
+Type errors to detect:
+Wrong returned type. Binary-tree, Linked-list
+Undefined variable. Bubble-sort 76, Tree-visitor 339
+[] only matches with Array. Line-search 37, Quicksort 42
+Left type and right type of * does not match, Factorial 13
+Number of parameters of method does not match. Morethan4
+
+Piglet:
+If a class has n variables, then it should allocate 4n+4 bytes.
+The first 4 bytes are used to store the list of functions, and others are used to store variables.
+TEMP 1-20 is used to be the variables of functions.
+TEMP is considered local variable inside a function.
+
+A very strange thing:
+If I allocate 44 Bytes in Piglet, then I have to visit the address of 0,4,8,12,...
+But when my code has bug, and I visit the address of 0,4,5,6,..., it still goes right.
+I think maybe the number is too small, so I assign numbers like 20123123 to address 4,
+but it still has no affect on address 5, which I cannot explain.
+But when the same bug appears in Kanga, it does not go right and takes me some time to fix it.
+
+
+Kanga:
+label are now global
+24 global registers:
+a0-a3 parameter
+v0 return value
+v1 temporary values when loading from stack
+s0-s7 t0-t9 general use
+
+ASTORE ALOAD interact with stack
+PASSARG to make more than 4 parameters variable
+
+Variable in stack can be regarded as local,
+that is, "SPILLEDARG 0" in different procedure are different from each other
+
+Procedures have three integers in its head
+the first is the number of parameters
+the second is the maximum of numbers that the procedure may use the stack
+the third is the maximum of numbers of parameters of the producers that this producer may call
+

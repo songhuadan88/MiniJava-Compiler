@@ -411,7 +411,9 @@ public class ToPigletVisitor extends GJDepthFirst<Object,Object>{
 	      if(indexAsLocalVariable >=0)
 	      {
 	    	  int middleValueTempIndex=methodArgu.newTemp();
-	    	  append(String.format("MOVE TEMP %1d PLUS TEMP %2d TEMP %3d", middleValueTempIndex,methodArgu.method.allParameter.size()+indexAsLocalVariable+1,leftValueOffsetExpression.tempIndex ));
+	    	  int middleValueTempIndex1=methodArgu.newTemp();
+	    	  append(String.format("MOVE TEMP %1d TIMES TEMP %2d 4",middleValueTempIndex1,leftValueOffsetExpression.tempIndex));
+	    	  append(String.format("MOVE TEMP %1d PLUS TEMP %2d TEMP %3d", middleValueTempIndex,methodArgu.method.allParameter.size()+indexAsLocalVariable+1,middleValueTempIndex1 ));
 	    	  append(String.format("HSTORE TEMP %1d %2d TEMP %3d",middleValueTempIndex, 4,rightValueExpression.tempIndex));
 	    	  return _ret;
 	      }
@@ -419,7 +421,9 @@ public class ToPigletVisitor extends GJDepthFirst<Object,Object>{
 	      if(indexAsParameter >= 0)
 	      {
 	    	  int middleValueTempIndex=methodArgu.newTemp();
-	    	  append(String.format("MOVE TEMP %1d PLUS TEMP %2d TEMP %3d", middleValueTempIndex,indexAsParameter+1,leftValueOffsetExpression.tempIndex ));
+	    	  int middleValueTempIndex1=methodArgu.newTemp();
+	    	  append(String.format("MOVE TEMP %1d TIMES TEMP %2d 4",middleValueTempIndex1,leftValueOffsetExpression.tempIndex));
+	    	  append(String.format("MOVE TEMP %1d PLUS TEMP %2d TEMP %3d", middleValueTempIndex,indexAsParameter+1,middleValueTempIndex1 ));
 	    	  append(String.format("HSTORE TEMP %1d %2d TEMP %3d",middleValueTempIndex, 4,rightValueExpression.tempIndex));
 	    	  return _ret;
 	      }
@@ -428,8 +432,10 @@ public class ToPigletVisitor extends GJDepthFirst<Object,Object>{
 	      {
 	    	  int middleValueTempIndex1=methodArgu.newTemp();
 	    	  int middleValueTempIndex2=methodArgu.newTemp();
+	    	  int middleValueTempIndex3=methodArgu.newTemp();
+	    	  append(String.format("MOVE TEMP %1d TIMES TEMP %2d 4",middleValueTempIndex3,leftValueOffsetExpression.tempIndex));
 	    	  append(String.format("HLOAD TEMP %1d TEMP 0 %2d",middleValueTempIndex1,4*indexAsClassVariable+4));
-	    	  append(String.format("MOVE TEMP %1d PLUS TEMP %2d TEMP %3d", middleValueTempIndex2,middleValueTempIndex1,leftValueOffsetExpression.tempIndex));
+	    	  append(String.format("MOVE TEMP %1d PLUS TEMP %2d TEMP %3d", middleValueTempIndex2,middleValueTempIndex1,middleValueTempIndex3 ));
 	    	  append(String.format("HSTORE TEMP %1d %2d TEMP %3d",middleValueTempIndex2,4, rightValueExpression.tempIndex));
 	    	  return _ret;
 	      }	      
@@ -616,8 +622,10 @@ public class ToPigletVisitor extends GJDepthFirst<Object,Object>{
 	      n.f3.accept(this, argu);
 	      MethodArgument methodArgu=(MethodArgument)argu; 
 	      int middleValueTempIndex=methodArgu.newTemp();
+	      int middleValueTempIndex1=methodArgu.newTemp();
 	      int resultTempIndex=methodArgu.newTemp();
-	      append(String.format("MOVE TEMP %1d PLUS TEMP %2d TEMP %3d",middleValueTempIndex,addressExpression.tempIndex,offsetExpression.tempIndex));
+	      append(String.format("MOVE TEMP %1d TIMES TEMP %2d 4",middleValueTempIndex1,offsetExpression.tempIndex));
+	      append(String.format("MOVE TEMP %1d PLUS TEMP %2d TEMP %3d",middleValueTempIndex,addressExpression.tempIndex,middleValueTempIndex1));
 	      append(String.format("HLOAD TEMP %1d TEMP %2d 4",resultTempIndex,middleValueTempIndex));	      
 	      return new ExpressionResult(new VariableType(FourType.Integer),resultTempIndex);
 	   }
