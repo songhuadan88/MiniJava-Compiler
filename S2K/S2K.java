@@ -25,6 +25,7 @@ public class S2K {
 		fileWrite.println(visitor1.kangaString);
 		fileWrite.close();
 				
+
 	}
 
 }

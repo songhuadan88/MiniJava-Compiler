@@ -175,7 +175,13 @@ public class ToKangaVisitor extends GJDepthFirst<Object,Object>
 	      ProcedureArgument procedureArgu=new ProcedureArgument(procedure);
 	      append(String.format("%s [%d][%d][%d]",procedureName,procedure.numberOfParameter,procedure.NeededStackSpace(),SPigletTable.MaximumOfProcedureParameter()));
 	      currentTab++;
-	      for(int i=0;i<procedure.numberOfParameter;i++)
+	      
+	      for(int i=4;i<procedure.numberOfParameter;i++)
+	      {
+	    	  append(String.format("ALOAD v0 SPILLEDARG %d",i-4));
+	    	  append(String.format("ASTORE SPILLEDARG %d v0",i));
+	      }
+	      for(int i=0;i<Math.min(4,procedure.numberOfParameter);i++)
 	      {
 	    	  append(String.format("ASTORE SPILLEDARG %d a%d",i,i));
 	      }

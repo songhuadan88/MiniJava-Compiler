@@ -1,7 +1,6 @@
 This is a repository for MiniJava compiler.
 
 
-Deal with MoreThan 4
 Realize MIPS
 Code Separation and Liveness analysis ...
 
@@ -49,4 +48,7 @@ Procedures have three integers in its head
 the first is the number of parameters
 the second is the maximum of numbers that the procedure may use the stack
 the third is the maximum of numbers of parameters of the producers that this producer may call
+
+
+NodeListOptional corresponds to the * in the BNF.
 

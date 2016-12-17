@@ -11,10 +11,10 @@ for f in $file; do
     echo "convert to kanga ..."
     kangafile="Programs/$filename.kg"
     java -jar Jar/tokanga.jar $pigletfile $kangafile
-    echo "run piglet ..."
-    java -jar Jar/pgi.jar < $pigletfile
-    echo "check spiglet grammer ..."
-    java -jar Jar/spp.jar < $pigletfile
+    # echo "run piglet ..."
+    # java -jar Jar/pgi.jar < $pigletfile
+    # echo "check spiglet grammer ..."
+    # java -jar Jar/spp.jar < $pigletfile
     echo "run kanga ..."
     java -jar Jar/kgi.jar < $kangafile
     printf "\n\n"
