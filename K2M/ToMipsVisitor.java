@@ -1,4 +1,6 @@
 
+import java.util.Enumeration;
+
 import syntaxtree.*;
 import visitor.GJDepthFirst;
 
@@ -14,7 +16,7 @@ public class ToMipsVisitor extends GJDepthFirst<Object,Object>
     }
     void append(String str, boolean hasTab)
     {
-        mipsString=(hasTab?"\t":"")+str+"\n";
+        mipsString+=(hasTab?"\t":"")+str+"\n";
 
     }
 
@@ -33,7 +35,60 @@ public class ToMipsVisitor extends GJDepthFirst<Object,Object>
     		append(String.format("la $%s %s", reg, simpleExp.str));
     	}
     }
+    
+    void AssignExpToReg(ExpRet exp, String reg)
+    {
+    	if(exp.type==ExpType.HAllocate)
+    	{
+    		append(String.format("move $%s $%s",reg,"v0"));
+    	}
+    	if(exp.type==ExpType.SimpleExp)
+    	{
+    		AssignSimpleExpToReg(exp.simpleExp,reg);
+    	}
+    	if(exp.type==ExpType.BinOp)
+    	{
+    		BinOpRet binOp=exp.binOp;
+    		String reg3="v0";
+    		if(binOp.reg=="v0")
+    			reg3="v1";
+    		AssignSimpleExpToReg(binOp.exp,reg3);
+    		if(binOp.operator=="LT")
+    		{
+    			append(String.format("slt $%s, $%s, $%s",reg,binOp.reg,reg3));
+    		}
+    		if(binOp.operator=="PLUS")
+    		{
+    			append(String.format("add $%s, $%s, $%s",reg,binOp.reg,reg3));
+    		}
+    		if(binOp.operator=="MINUS")
+    		{
+    			append(String.format("sub $%s, $%s, $%s",reg,binOp.reg,reg3));
+    		}
+    		if(binOp.operator=="TIMES")
+    		{
+    			append(String.format("mul $%s, $%s, $%s",reg,binOp.reg,reg3));
+    		}
+    	}
+    }
 
+	   public Object visit(NodeSequence n, Object argu) {		
+	      int _count=0;
+	      for ( Enumeration<Node> e = n.elements(); e.hasMoreElements(); ) {
+	         if(_count==0)
+	         {
+	    	   String label = (String)e.nextElement().accept(this,argu);
+	    	   if(label!=null)
+	    	   {
+	    		   append(label+":",false);
+	    	   }
+	         }
+	         else
+	        	 e.nextElement().accept(this,argu);
+	         _count++;
+	      }
+	      return null;
+	   }
    /**
     * f0 -> "MAIN"
     * f1 -> "["
@@ -54,18 +109,54 @@ public class ToMipsVisitor extends GJDepthFirst<Object,Object>
       Object _ret=null;
       n.f0.accept(this, argu);
       n.f1.accept(this, argu);
-      n.f2.accept(this, argu);
+      int para1=(Integer)n.f2.accept(this, argu);
       n.f3.accept(this, argu);
       n.f4.accept(this, argu);
-      n.f5.accept(this, argu);
+      int para2=(Integer)n.f5.accept(this, argu);
+      this.currentProcedureStack=para2;
       n.f6.accept(this, argu);
       n.f7.accept(this, argu);
-      n.f8.accept(this, argu);
+      int para3=(Integer)n.f8.accept(this, argu);
       n.f9.accept(this, argu);
+      append(".text");
+      append(".globl main");
+      append("main:",false);
+      append("move $fp, $sp");
+      append("subu $sp, $sp, "+(4*para2+4));
+      append("sw $ra, -4($fp)");
       n.f10.accept(this, argu);
+      append("lw $ra, -4($fp)");
+      append("addu $sp, $sp, "+(4*para2+4));
+      append("j $ra");
       n.f11.accept(this, argu);
       n.f12.accept(this, argu);
       n.f13.accept(this, argu);
+      append("");
+      append(".text");
+      append(".globl _halloc");
+      append("_halloc:",false);
+      append("li $v0, 9");
+      append("syscall");
+      append("j $ra");
+      append("");
+      append(".text");
+      append(".globl _print");
+      append("_print:",false);
+      append("li $v0, 1");
+      append("syscall");
+      append("la $a0, newl");
+      append("li $v0, 4");
+      append("syscall");
+      append("j $ra");
+      append("");
+      append(".data");
+      append(".align 0");
+      append("newl:",false);
+      append(".asciiz \"\\n\""); 
+      append(".data");
+      append(".align 0");
+      append("str_er:",false);
+      append(".asciiz \" ERROR: abnormal termination\\n\""); 
       return _ret;
    }
 
@@ -94,18 +185,31 @@ public class ToMipsVisitor extends GJDepthFirst<Object,Object>
     */
    public Object visit(Procedure n, Object argu) {
       Object _ret=null;
-      n.f0.accept(this, argu);
+      String name=(String)n.f0.accept(this, argu);
       n.f1.accept(this, argu);
-      n.f2.accept(this, argu);
+      int para1=(Integer)n.f2.accept(this, argu);
       n.f3.accept(this, argu);
       n.f4.accept(this, argu);
-      n.f5.accept(this, argu);
+      int para2=(Integer)n.f5.accept(this, argu);
+      this.currentProcedureStack=para2;
       n.f6.accept(this, argu);
       n.f7.accept(this, argu);
-      n.f8.accept(this, argu);
+      int para3=(Integer)n.f8.accept(this, argu);
       n.f9.accept(this, argu);
+      append("");
+      append(".text");
+      append(".globl "+name);
+      append(name+":",false);
+      append("sw $fp, -8($sp)");
+      append("move $fp, $sp");
+      append("subu $sp, $sp, "+(4*para2+8));
+      append("sw $ra, -4($fp)");
       n.f10.accept(this, argu);
       n.f11.accept(this, argu);
+      append("lw $ra, -4($fp)");
+      append("lw $fp, 12($sp)");
+      append("addu $sp, $sp, "+(4*para2+8));
+      append("j $ra");
       return _ret;
    }
 
@@ -132,19 +236,18 @@ public class ToMipsVisitor extends GJDepthFirst<Object,Object>
    /**
     * f0 -> "NOOP"
     */
-   public Object visit(NoOpStmt n, Object argu) {
-      Object _ret=null;
+   public Object visit(NoOpStmt n, Object argu) {      
       n.f0.accept(this, argu);
-      return _ret;
+      append("nop");
+      return null;
    }
 
    /**
     * f0 -> "ERROR"
     */
-   public Object visit(ErrorStmt n, Object argu) {
-      Object _ret=null;
+   public Object visit(ErrorStmt n, Object argu) {      
       n.f0.accept(this, argu);
-      return _ret;
+      return null;
    }
 
    /**
@@ -152,23 +255,23 @@ public class ToMipsVisitor extends GJDepthFirst<Object,Object>
     * f1 -> Reg()
     * f2 -> Label()
     */
-   public Object visit(CJumpStmt n, Object argu) {
-      Object _ret=null;
+   public Object visit(CJumpStmt n, Object argu) {      
       n.f0.accept(this, argu);
-      n.f1.accept(this, argu);
-      n.f2.accept(this, argu);
-      return _ret;
+      String reg=(String)n.f1.accept(this, argu);
+      String label=(String)n.f2.accept(this, argu);
+      append(String.format("beqz $%s %s",reg,label));
+      return null;
    }
 
    /**
     * f0 -> "JUMP"
     * f1 -> Label()
     */
-   public Object visit(JumpStmt n, Object argu) {
-      Object _ret=null;
+   public Object visit(JumpStmt n, Object argu) {      
       n.f0.accept(this, argu);
-      n.f1.accept(this, argu);
-      return _ret;
+      String label=(String)n.f1.accept(this, argu);
+      append(String.format("b %s",label));
+      return null;
    }
 
    /**
@@ -177,13 +280,13 @@ public class ToMipsVisitor extends GJDepthFirst<Object,Object>
     * f2 -> IntegerLiteral()
     * f3 -> Reg()
     */
-   public Object visit(HStoreStmt n, Object argu) {
-      Object _ret=null;
+   public Object visit(HStoreStmt n, Object argu) {      
       n.f0.accept(this, argu);
-      n.f1.accept(this, argu);
-      n.f2.accept(this, argu);
-      n.f3.accept(this, argu);
-      return _ret;
+      String reg1=(String)n.f1.accept(this, argu);
+      int addr=(Integer)n.f2.accept(this, argu);
+      String reg2=(String)n.f3.accept(this, argu);
+      append(String.format("sw $%s, %d($%s)",reg2,addr,reg1));
+      return null;
    }
 
    /**
@@ -193,12 +296,12 @@ public class ToMipsVisitor extends GJDepthFirst<Object,Object>
     * f3 -> IntegerLiteral()
     */
    public Object visit(HLoadStmt n, Object argu) {
-      Object _ret=null;
       n.f0.accept(this, argu);
-      n.f1.accept(this, argu);
-      n.f2.accept(this, argu);
-      n.f3.accept(this, argu);
-      return _ret;
+      String reg1 =(String)n.f1.accept(this, argu);
+      String reg2 =(String)n.f2.accept(this, argu);
+      int addr =(Integer)n.f3.accept(this, argu);
+      append(String.format("lw $%s, %d($%s)",reg1,addr,reg2));
+      return null;
    }
 
    /**
@@ -206,12 +309,12 @@ public class ToMipsVisitor extends GJDepthFirst<Object,Object>
     * f1 -> Reg()
     * f2 -> Exp()
     */
-   public Object visit(MoveStmt n, Object argu) {
-      Object _ret=null;
+   public Object visit(MoveStmt n, Object argu) {      
       n.f0.accept(this, argu);
-      n.f1.accept(this, argu);
-      n.f2.accept(this, argu);
-      return _ret;
+      String reg=(String)n.f1.accept(this, argu);
+      ExpRet exp=(ExpRet)n.f2.accept(this, argu);
+      AssignExpToReg(exp,reg);
+      return null;
    }
 
    /**
@@ -219,10 +322,11 @@ public class ToMipsVisitor extends GJDepthFirst<Object,Object>
     * f1 -> SimpleExp()
     */
    public Object visit(PrintStmt n, Object argu) {
-      Object _ret=null;
       n.f0.accept(this, argu);
-      n.f1.accept(this, argu);
-      return _ret;
+      SimpleExpRet simpleExp =(SimpleExpRet) n.f1.accept(this, argu);
+      AssignSimpleExpToReg(simpleExp,"a0");
+      append("jal _print");
+      return null;
    }
 
    /**
@@ -232,8 +336,8 @@ public class ToMipsVisitor extends GJDepthFirst<Object,Object>
     */
    public Object visit(ALoadStmt n, Object argu) {      
       n.f0.accept(this, argu);
-      int addr=(Integer)n.f1.accept(this, argu);
-      String reg=(String)n.f2.accept(this, argu);
+      String reg=(String)n.f1.accept(this, argu);
+      int addr=(Integer)n.f2.accept(this, argu);
       append(String.format("lw $%s, %d($sp)", reg, 4*currentProcedureStack-4-4*addr));          
       return null;
    }
@@ -337,7 +441,7 @@ public class ToMipsVisitor extends GJDepthFirst<Object,Object>
     */
    public Object visit(Operator n, Object argu) {      
       n.f0.accept(this, argu);
-      return n.f0.toString();
+      return n.f0.choice.toString();
    }
 
    /**
@@ -365,7 +469,7 @@ public class ToMipsVisitor extends GJDepthFirst<Object,Object>
     	  ret.type=SimpleExpType.Reg;
     	  ret.str=(String)_ret;
       }
-      if(n.f0.choice instanceof Reg)
+      if(n.f0.choice instanceof Label)
       {
     	  ret.type=SimpleExpType.Label;
     	  ret.str=(String)_ret;
@@ -406,7 +510,7 @@ public class ToMipsVisitor extends GJDepthFirst<Object,Object>
     */
    public Object visit(Reg n, Object argu) {
       n.f0.accept(this, argu);
-      return n.f0.toString();
+      return n.f0.choice.toString();
    }
 
    /**

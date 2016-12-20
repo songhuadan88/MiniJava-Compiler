@@ -22,7 +22,7 @@ public class K2M {
 		fileWrite.println(visitor1.mipsString);
 		fileWrite.close();
 				
-        System.out.println("Initialized");
+        //System.out.println("Initialized");
 	}
 
 }
