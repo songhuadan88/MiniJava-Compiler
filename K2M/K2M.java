@@ -12,6 +12,7 @@ public class K2M {
 	 */
 	public static void main(String[] args) throws FileNotFoundException, ParseException {
 		
+		//System.out.println("Initialized");
 		// TODO Auto-generated method stub
 		new KangaParser(new java.io.FileInputStream(args[0]));
 		Node root = KangaParser.Goal();
