@@ -12,7 +12,7 @@ public class S2K {
 	 */
 	public static void main(String[] args) throws FileNotFoundException, ParseException {
 		
-		System.out.println("OK");
+		//System.out.println("OK");
 		// TODO Auto-generated method stub
 		new SpigletParser(new java.io.FileInputStream(args[0]));
 		Node root = SpigletParser.Goal();
@@ -20,13 +20,15 @@ public class S2K {
 		root.accept(visitor,null);
 
 		//SPigletTable.Print();
+		SPigletTable.DivideBasicBlock();
+		SPigletTable.PrintBasicBlock();
 		ToKangaVisitor visitor1=new ToKangaVisitor();
 		root.accept(visitor1,null);		
 		java.io.PrintWriter fileWrite=new java.io.PrintWriter(args[1]);
 		fileWrite.println(visitor1.kangaString);
 		fileWrite.close();
 				
-		System.out.println("OK");
+		//System.out.println("OK");
 	}
 
 }

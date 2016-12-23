@@ -190,7 +190,7 @@ public class BuildSymbolTableVisitor extends GJDepthFirst<Object,Object>
 	      n.f0.accept(this, argu);
 	      String label=(String)n.f1.accept(this, argu);
 	      SPigletStatement statement=new SPigletStatement();	      
-	      statement.canJump=true;
+	      statement.mustJump=true;
 	      statement.jumpToLabel=label;
 	      return statement;
 	   }

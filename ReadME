@@ -1,8 +1,9 @@
 This is a repository for MiniJava compiler.
 
 
-Code Separation and Liveness analysis ...
-
+Liveness analysis
+Register Dispatch
+Convert To Kanga
 
 Grammar on MiniJava:
 There is only one function in the MainClass.
