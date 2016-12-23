@@ -185,7 +185,7 @@ LS_Start:
 	lw $v1, 36($sp)
 	move $v0 $v1
 	lw $ra, -4($fp)
-	lw $fp, 12($sp)
+	lw $fp, 148($sp)
 	addu $sp, $sp, 156
 	j $ra
 	
@@ -250,7 +250,7 @@ L1:
 	lw $v1, 36($sp)
 	move $v0 $v1
 	lw $ra, -4($fp)
-	lw $fp, 12($sp)
+	lw $fp, 84($sp)
 	addu $sp, $sp, 92
 	j $ra
 	
@@ -391,7 +391,7 @@ L3:
 	lw $v1, 136($sp)
 	move $v0 $v1
 	lw $ra, -4($fp)
-	lw $fp, 12($sp)
+	lw $fp, 156($sp)
 	addu $sp, $sp, 164
 	j $ra
 	
@@ -524,7 +524,7 @@ L9:
 	lw $v1, 36($sp)
 	move $v0 $v1
 	lw $ra, -4($fp)
-	lw $fp, 12($sp)
+	lw $fp, 148($sp)
 	addu $sp, $sp, 156
 	j $ra
 	

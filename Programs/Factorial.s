@@ -32,7 +32,7 @@ main:
 	lw $v0, 56($sp)
 	move $a0 $v0
 	lw $v0, 48($sp)
-	move $a1 $v0	
+	move $a1 $v0
 	jalr $v1
 	move $v1 $v0
 	sw $v1, 36($sp)
@@ -103,7 +103,7 @@ L2:
 	lw $v1, 72($sp)
 	move $v0 $v1
 	lw $ra, -4($fp)
-	lw $fp, 12($sp)
+	lw $fp, 84($sp)
 	addu $sp, $sp, 92
 	j $ra
 	

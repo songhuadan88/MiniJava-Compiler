@@ -158,7 +158,7 @@ QS_Start:
 	lw $v1, 36($sp)
 	move $v0 $v1
 	lw $ra, -4($fp)
-	lw $fp, 12($sp)
+	lw $fp, 120($sp)
 	addu $sp, $sp, 128
 	j $ra
 	
@@ -599,7 +599,7 @@ L2:
 	lw $v1, 36($sp)
 	move $v0 $v1
 	lw $ra, -4($fp)
-	lw $fp, 12($sp)
+	lw $fp, 404($sp)
 	addu $sp, $sp, 412
 	j $ra
 	
@@ -664,7 +664,7 @@ L15:
 	lw $v1, 36($sp)
 	move $v0 $v1
 	lw $ra, -4($fp)
-	lw $fp, 12($sp)
+	lw $fp, 84($sp)
 	addu $sp, $sp, 92
 	j $ra
 	
@@ -894,7 +894,7 @@ QS_Init:
 	lw $v1, 36($sp)
 	move $v0 $v1
 	lw $ra, -4($fp)
-	lw $fp, 12($sp)
+	lw $fp, 260($sp)
 	addu $sp, $sp, 268
 	j $ra
 	

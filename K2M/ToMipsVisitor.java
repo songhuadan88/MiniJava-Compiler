@@ -207,7 +207,7 @@ public class ToMipsVisitor extends GJDepthFirst<Object,Object>
       n.f10.accept(this, argu);
       n.f11.accept(this, argu);
       append("lw $ra, -4($fp)");
-      append("lw $fp, 12($sp)");
+      append(String.format("lw $fp, %d($sp)",4*para2));
       append("addu $sp, $sp, "+(4*para2+8));
       append("j $ra");
       return _ret;

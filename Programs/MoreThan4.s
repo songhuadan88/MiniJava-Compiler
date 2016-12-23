@@ -133,7 +133,7 @@ MT4_Start:
 	lw $v1, 48($sp)
 	move $v0 $v1
 	lw $ra, -4($fp)
-	lw $fp, 12($sp)
+	lw $fp, 80($sp)
 	addu $sp, $sp, 88
 	j $ra
 	
@@ -177,7 +177,7 @@ MT4_Change:
 	lw $v1, 36($sp)
 	move $v0 $v1
 	lw $ra, -4($fp)
-	lw $fp, 12($sp)
+	lw $fp, 68($sp)
 	addu $sp, $sp, 76
 	j $ra
 	

@@ -139,7 +139,7 @@ BBS_Start:
 	lw $v1, 36($sp)
 	move $v0 $v1
 	lw $ra, -4($fp)
-	lw $fp, 12($sp)
+	lw $fp, 104($sp)
 	addu $sp, $sp, 112
 	j $ra
 	
@@ -373,7 +373,7 @@ L1:
 	lw $v1, 36($sp)
 	move $v0 $v1
 	lw $ra, -4($fp)
-	lw $fp, 12($sp)
+	lw $fp, 252($sp)
 	addu $sp, $sp, 260
 	j $ra
 	
@@ -438,7 +438,7 @@ L7:
 	lw $v1, 36($sp)
 	move $v0 $v1
 	lw $ra, -4($fp)
-	lw $fp, 12($sp)
+	lw $fp, 84($sp)
 	addu $sp, $sp, 92
 	j $ra
 	
@@ -668,7 +668,7 @@ BBS_Init:
 	lw $v1, 36($sp)
 	move $v0 $v1
 	lw $ra, -4($fp)
-	lw $fp, 12($sp)
+	lw $fp, 260($sp)
 	addu $sp, $sp, 268
 	j $ra
 	

@@ -64,7 +64,7 @@ Element_Init:
 	lw $v1, 36($sp)
 	move $v0 $v1
 	lw $ra, -4($fp)
-	lw $fp, 12($sp)
+	lw $fp, 56($sp)
 	addu $sp, $sp, 64
 	j $ra
 	
@@ -82,7 +82,7 @@ Element_GetAge:
 	lw $v1, 36($sp)
 	move $v0 $v1
 	lw $ra, -4($fp)
-	lw $fp, 12($sp)
+	lw $fp, 44($sp)
 	addu $sp, $sp, 52
 	j $ra
 	
@@ -100,7 +100,7 @@ Element_GetSalary:
 	lw $v1, 36($sp)
 	move $v0 $v1
 	lw $ra, -4($fp)
-	lw $fp, 12($sp)
+	lw $fp, 44($sp)
 	addu $sp, $sp, 52
 	j $ra
 	
@@ -118,7 +118,7 @@ Element_GetMarried:
 	lw $v1, 36($sp)
 	move $v0 $v1
 	lw $ra, -4($fp)
-	lw $fp, 12($sp)
+	lw $fp, 44($sp)
 	addu $sp, $sp, 52
 	j $ra
 	
@@ -320,7 +320,7 @@ L2:
 	lw $v1, 184($sp)
 	move $v0 $v1
 	lw $ra, -4($fp)
-	lw $fp, 12($sp)
+	lw $fp, 196($sp)
 	addu $sp, $sp, 204
 	j $ra
 	
@@ -398,7 +398,7 @@ L12:
 	lw $v1, 80($sp)
 	move $v0 $v1
 	lw $ra, -4($fp)
-	lw $fp, 12($sp)
+	lw $fp, 96($sp)
 	addu $sp, $sp, 104
 	j $ra
 	
@@ -420,7 +420,7 @@ List_Init:
 	lw $v1, 36($sp)
 	move $v0 $v1
 	lw $ra, -4($fp)
-	lw $fp, 12($sp)
+	lw $fp, 48($sp)
 	addu $sp, $sp, 56
 	j $ra
 	
@@ -449,7 +449,7 @@ List_InitNew:
 	lw $v1, 36($sp)
 	move $v0 $v1
 	lw $ra, -4($fp)
-	lw $fp, 12($sp)
+	lw $fp, 56($sp)
 	addu $sp, $sp, 64
 	j $ra
 	
@@ -555,7 +555,7 @@ List_Insert:
 	lw $v1, 100($sp)
 	move $v0 $v1
 	lw $ra, -4($fp)
-	lw $fp, 12($sp)
+	lw $fp, 120($sp)
 	addu $sp, $sp, 128
 	j $ra
 	
@@ -576,7 +576,7 @@ List_SetNext:
 	lw $v1, 36($sp)
 	move $v0 $v1
 	lw $ra, -4($fp)
-	lw $fp, 12($sp)
+	lw $fp, 48($sp)
 	addu $sp, $sp, 56
 	j $ra
 	
@@ -848,7 +848,7 @@ L15:
 	lw $v1, 252($sp)
 	move $v0 $v1
 	lw $ra, -4($fp)
-	lw $fp, 12($sp)
+	lw $fp, 264($sp)
 	addu $sp, $sp, 272
 	j $ra
 	
@@ -974,7 +974,7 @@ L25:
 	lw $v1, 128($sp)
 	move $v0 $v1
 	lw $ra, -4($fp)
-	lw $fp, 12($sp)
+	lw $fp, 140($sp)
 	addu $sp, $sp, 148
 	j $ra
 	
@@ -992,7 +992,7 @@ List_GetEnd:
 	lw $v1, 36($sp)
 	move $v0 $v1
 	lw $ra, -4($fp)
-	lw $fp, 12($sp)
+	lw $fp, 44($sp)
 	addu $sp, $sp, 52
 	j $ra
 	
@@ -1010,7 +1010,7 @@ List_GetElem:
 	lw $v1, 36($sp)
 	move $v0 $v1
 	lw $ra, -4($fp)
-	lw $fp, 12($sp)
+	lw $fp, 44($sp)
 	addu $sp, $sp, 52
 	j $ra
 	
@@ -1028,7 +1028,7 @@ List_GetNext:
 	lw $v1, 36($sp)
 	move $v0 $v1
 	lw $ra, -4($fp)
-	lw $fp, 12($sp)
+	lw $fp, 44($sp)
 	addu $sp, $sp, 52
 	j $ra
 	
@@ -1134,7 +1134,7 @@ L29:
 	lw $v1, 36($sp)
 	move $v0 $v1
 	lw $ra, -4($fp)
-	lw $fp, 12($sp)
+	lw $fp, 120($sp)
 	addu $sp, $sp, 128
 	j $ra
 	
@@ -1877,7 +1877,7 @@ LL_Start:
 	lw $v1, 36($sp)
 	move $v0 $v1
 	lw $ra, -4($fp)
-	lw $fp, 12($sp)
+	lw $fp, 624($sp)
 	addu $sp, $sp, 632
 	j $ra
 	

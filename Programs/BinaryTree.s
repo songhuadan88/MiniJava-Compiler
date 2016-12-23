@@ -516,7 +516,7 @@ BT_Start:
 	lw $v1, 36($sp)
 	move $v0 $v1
 	lw $ra, -4($fp)
-	lw $fp, 12($sp)
+	lw $fp, 436($sp)
 	addu $sp, $sp, 444
 	j $ra
 	
@@ -547,7 +547,7 @@ Tree_Init:
 	lw $v1, 36($sp)
 	move $v0 $v1
 	lw $ra, -4($fp)
-	lw $fp, 12($sp)
+	lw $fp, 56($sp)
 	addu $sp, $sp, 64
 	j $ra
 	
@@ -568,7 +568,7 @@ Tree_SetRight:
 	lw $v1, 36($sp)
 	move $v0 $v1
 	lw $ra, -4($fp)
-	lw $fp, 12($sp)
+	lw $fp, 48($sp)
 	addu $sp, $sp, 56
 	j $ra
 	
@@ -589,7 +589,7 @@ Tree_SetLeft:
 	lw $v1, 36($sp)
 	move $v0 $v1
 	lw $ra, -4($fp)
-	lw $fp, 12($sp)
+	lw $fp, 48($sp)
 	addu $sp, $sp, 56
 	j $ra
 	
@@ -607,7 +607,7 @@ Tree_GetRight:
 	lw $v1, 36($sp)
 	move $v0 $v1
 	lw $ra, -4($fp)
-	lw $fp, 12($sp)
+	lw $fp, 44($sp)
 	addu $sp, $sp, 52
 	j $ra
 	
@@ -625,7 +625,7 @@ Tree_GetLeft:
 	lw $v1, 36($sp)
 	move $v0 $v1
 	lw $ra, -4($fp)
-	lw $fp, 12($sp)
+	lw $fp, 44($sp)
 	addu $sp, $sp, 52
 	j $ra
 	
@@ -643,7 +643,7 @@ Tree_GetKey:
 	lw $v1, 36($sp)
 	move $v0 $v1
 	lw $ra, -4($fp)
-	lw $fp, 12($sp)
+	lw $fp, 44($sp)
 	addu $sp, $sp, 52
 	j $ra
 	
@@ -664,7 +664,7 @@ Tree_SetKey:
 	lw $v1, 36($sp)
 	move $v0 $v1
 	lw $ra, -4($fp)
-	lw $fp, 12($sp)
+	lw $fp, 48($sp)
 	addu $sp, $sp, 56
 	j $ra
 	
@@ -682,7 +682,7 @@ Tree_GetHas_Right:
 	lw $v1, 36($sp)
 	move $v0 $v1
 	lw $ra, -4($fp)
-	lw $fp, 12($sp)
+	lw $fp, 44($sp)
 	addu $sp, $sp, 52
 	j $ra
 	
@@ -700,7 +700,7 @@ Tree_GetHas_Left:
 	lw $v1, 36($sp)
 	move $v0 $v1
 	lw $ra, -4($fp)
-	lw $fp, 12($sp)
+	lw $fp, 44($sp)
 	addu $sp, $sp, 52
 	j $ra
 	
@@ -721,7 +721,7 @@ Tree_SetHas_Left:
 	lw $v1, 36($sp)
 	move $v0 $v1
 	lw $ra, -4($fp)
-	lw $fp, 12($sp)
+	lw $fp, 48($sp)
 	addu $sp, $sp, 56
 	j $ra
 	
@@ -742,7 +742,7 @@ Tree_SetHas_Right:
 	lw $v1, 36($sp)
 	move $v0 $v1
 	lw $ra, -4($fp)
-	lw $fp, 12($sp)
+	lw $fp, 48($sp)
 	addu $sp, $sp, 56
 	j $ra
 	
@@ -820,7 +820,7 @@ L2:
 	lw $v1, 80($sp)
 	move $v0 $v1
 	lw $ra, -4($fp)
-	lw $fp, 12($sp)
+	lw $fp, 96($sp)
 	addu $sp, $sp, 104
 	j $ra
 	
@@ -1161,7 +1161,7 @@ L5:
 	lw $v1, 36($sp)
 	move $v0 $v1
 	lw $ra, -4($fp)
-	lw $fp, 12($sp)
+	lw $fp, 300($sp)
 	addu $sp, $sp, 308
 	j $ra
 	
@@ -1450,7 +1450,7 @@ L13:
 	lw $v1, 220($sp)
 	move $v0 $v1
 	lw $ra, -4($fp)
-	lw $fp, 12($sp)
+	lw $fp, 244($sp)
 	addu $sp, $sp, 252
 	j $ra
 	
@@ -1688,7 +1688,7 @@ L30:
 	lw $v1, 36($sp)
 	move $v0 $v1
 	lw $ra, -4($fp)
-	lw $fp, 12($sp)
+	lw $fp, 224($sp)
 	addu $sp, $sp, 232
 	j $ra
 	
@@ -1824,7 +1824,7 @@ L35:
 	lw $v1, 36($sp)
 	move $v0 $v1
 	lw $ra, -4($fp)
-	lw $fp, 12($sp)
+	lw $fp, 148($sp)
 	addu $sp, $sp, 156
 	j $ra
 	
@@ -1960,7 +1960,7 @@ L37:
 	lw $v1, 36($sp)
 	move $v0 $v1
 	lw $ra, -4($fp)
-	lw $fp, 12($sp)
+	lw $fp, 148($sp)
 	addu $sp, $sp, 156
 	j $ra
 	
@@ -2123,7 +2123,7 @@ L39:
 	lw $v1, 136($sp)
 	move $v0 $v1
 	lw $ra, -4($fp)
-	lw $fp, 12($sp)
+	lw $fp, 152($sp)
 	addu $sp, $sp, 160
 	j $ra
 	
@@ -2160,7 +2160,7 @@ Tree_Print:
 	lw $v1, 36($sp)
 	move $v0 $v1
 	lw $ra, -4($fp)
-	lw $fp, 12($sp)
+	lw $fp, 64($sp)
 	addu $sp, $sp, 72
 	j $ra
 	
@@ -2299,7 +2299,7 @@ L52:
 	lw $v1, 36($sp)
 	move $v0 $v1
 	lw $ra, -4($fp)
-	lw $fp, 12($sp)
+	lw $fp, 144($sp)
 	addu $sp, $sp, 152
 	j $ra
 	
