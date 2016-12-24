@@ -21,6 +21,7 @@ public class S2K {
 
 		//SPigletTable.Print();
 		SPigletTable.DivideBasicBlock();
+		SPigletTable.LivenessAnalyze();
 		SPigletTable.PrintBasicBlock();
 		ToKangaVisitor visitor1=new ToKangaVisitor();
 		root.accept(visitor1,null);		

@@ -1,8 +1,11 @@
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 import java.util.Set;
+import java.util.TreeSet;
 
 
 public class SPigletTable {
@@ -18,6 +21,14 @@ public class SPigletTable {
 		for(SPigletProcedure procedure : allProcedure)
 		{
 			procedure.DivideBasicBlock();
+		}
+	}
+	
+	static void LivenessAnalyze()
+	{
+		for(SPigletProcedure procedure : allProcedure)
+		{
+			procedure.LivenessAnalyze();
 		}
 	}
 	
@@ -84,7 +95,7 @@ class SPigletProcedure
 
 	public void DivideBasicBlock()
 	{
-		Set<Integer> blockHead=new HashSet<Integer>();
+		Set<Integer> blockHead=new TreeSet<Integer>();
 		for(int i=0;i<allStatement.size();i++)
 		{
 			if(i==0)
@@ -104,7 +115,7 @@ class SPigletProcedure
 			}
 		}
 		
-		int lastHead=-1;
+		int lastHead=-1;		
 		for(Integer head:blockHead)
 		{
 			if(lastHead==-1)
@@ -151,17 +162,56 @@ class SPigletProcedure
 		
 	}
 	
+	public void LivenessAnalyze()
+	{
+		Queue<SPigletBasicBlock> changed=new LinkedList<SPigletBasicBlock>();
+		for(SPigletBasicBlock block : allBasicBlock)
+		{
+			if(block.isExitBlock)
+				continue;
+			for(int i=block.startIndex;i<=block.endIndex;i++)
+			{
+				SPigletStatement statement=allStatement.get(i);
+				for(int temp : statement.assignedTemp)
+				{
+					if(block.USE.contains(temp) || block.DEF.contains(temp))
+						continue;
+					block.DEF.add(temp);
+				}
+				for(int temp : statement.accessedTemp)
+				{
+					if(block.USE.contains(temp) || block.DEF.contains(temp))
+						continue;
+					block.USE.add(temp);
+				}				
+			}
+			changed.add(block);
+		}
+		
+		while(!changed.isEmpty())
+		{
+			SPigletBasicBlock block=changed.remove();
+			block.OUT.clear();
+			for(SPigletBasicBlock b : block.childrenBlock)
+				block.OUT.addAll(b.IN);
+			Set<Integer> originalIN=new HashSet<Integer>(block.IN);
+			Set<Integer> calc=new HashSet<Integer>(block.OUT);
+			calc.removeAll(block.DEF);
+			calc.addAll(block.USE);			
+			if(originalIN.size()!=calc.size() || !originalIN.containsAll(calc))
+			{
+				block.IN=new HashSet<Integer>(calc);
+				for(SPigletBasicBlock b : block.parentBlock)
+				{
+					changed.add(b);
+				}
+			}
+		}
+	}
+	
 	public int NeededStackSpace() 
 	{
-		return maxTemp+10;
-//		if(numberOfParameter <= 4)
-//		{
-//			return Math.max(0,  maxTemp-numberOfParameter-9);
-//		}
-//		else
-//		{
-//			return Math.max(0, maxTemp-13);
-//		}		
+		return maxTemp+10;	
 	}
 	
 	public TempStorePosition GetStorePosition(int tempIndex, int statementIndex)
@@ -170,49 +220,6 @@ class SPigletProcedure
 		storePosition.type=StorePositionType.STACK;
 		storePosition.stackIndex=tempIndex;
 		return storePosition;
-//		if(numberOfParameter > 4)
-//		{
-//			if(tempIndex<=3)
-//			{
-//				storePosition.type=StorePositionType.REGISTER;
-//				storePosition.registerName="a"+tempIndex;
-//			}
-//			else if(tempIndex < numberOfParameter)
-//			{
-//				storePosition.type=StorePositionType.STACK;
-//				storePosition.stackIndex=tempIndex -4;				
-//			}
-//			else if (tempIndex<=numberOfParameter+9)
-//			{
-//				storePosition.type=StorePositionType.REGISTER;
-//				storePosition.registerName="t"+(tempIndex-numberOfParameter);
-//			}
-//			else
-//			{
-//				storePosition.type=StorePositionType.STACK;
-//				storePosition.stackIndex=tempIndex - 14;	
-//			}
-//		}
-//		else
-//		{
-//			if(tempIndex<numberOfParameter)
-//			{
-//				storePosition.type=StorePositionType.REGISTER;
-//				storePosition.registerName="a"+tempIndex;
-//			}
-//			else if(tempIndex<=numberOfParameter+9)
-//			{
-//				storePosition.type=StorePositionType.REGISTER;
-//				storePosition.registerName="t"+(tempIndex-numberOfParameter);
-//			}
-//			else
-//			{
-//				storePosition.type=StorePositionType.STACK;
-//				storePosition.stackIndex=tempIndex - 10 - numberOfParameter;	
-//			}
-//		}
-//		
-//		return storePosition;
 	}
 	
 	public void Print()
@@ -237,16 +244,21 @@ class SPigletProcedure
 class SPigletBasicBlock
 {
 	boolean isExitBlock;
+	SPigletProcedure parentProcudre;
 	int startIndex;
 	int endIndex;	
 	List<SPigletBasicBlock> childrenBlock=new ArrayList<SPigletBasicBlock>();
 	List<SPigletBasicBlock> parentBlock=new ArrayList<SPigletBasicBlock>();
-	SPigletProcedure parentProcudre;
+	Set<Integer> IN,OUT,USE,DEF;
 	
 	public SPigletBasicBlock(SPigletProcedure procedure)
 	{
 		isExitBlock=true;
 		parentProcudre=procedure;
+		IN=new HashSet<Integer>();
+		OUT=new HashSet<Integer>();
+		USE=new HashSet<Integer>();
+		DEF=new HashSet<Integer>();
 	}
 	
 	public SPigletBasicBlock(SPigletProcedure procedure,int start, int end)
@@ -255,6 +267,10 @@ class SPigletBasicBlock
 		parentProcudre=procedure;
 		startIndex=start;
 		endIndex=end;
+		IN=new HashSet<Integer>();
+		OUT=new HashSet<Integer>();
+		USE=new HashSet<Integer>();
+		DEF=new HashSet<Integer>();
 	}
 	
 	public void AddChildrenBlock(SPigletBasicBlock child)
@@ -275,12 +291,16 @@ class SPigletBasicBlock
 		System.out.println(String.format("BasicBlock %s, %d children, %d parents" , ShortDescription(),childrenBlock.size(),parentBlock.size()));
 		for(SPigletBasicBlock child : childrenBlock)
 		{
-			System.out.println(String.format("One child: %s", child.ShortDescription()));
+			System.out.println(String.format("\tOne child: %s", child.ShortDescription()));
 		}
 		for(SPigletBasicBlock parent : parentBlock)
 		{
-			System.out.println(String.format("One parent: %s", parent.ShortDescription()));
+			System.out.println(String.format("\tOne parent: %s", parent.ShortDescription()));
 		}
+		System.out.println("\tUSE: "+USE.toString());
+		System.out.println("\tDEF: "+DEF.toString());
+		System.out.println("\tIN: "+IN.toString());
+		System.out.println("\tOUT: "+OUT.toString());
 	}
 }
 
