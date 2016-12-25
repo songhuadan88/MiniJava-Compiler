@@ -2,45 +2,28 @@
 	.globl main
 main:
 	move $fp, $sp
-	subu $sp, $sp, 76
+	subu $sp, $sp, 20
 	sw $ra, -4($fp)
 	li $a0 4
 	jal _halloc
-	move $v1 $v0
-	sw $v1, 60($sp)
+	move $s0 $v0
 	li $a0 4
 	jal _halloc
-	move $v1 $v0
-	sw $v1, 56($sp)
-	la $v1 Fac_ComputeFac
-	sw $v1, 52($sp)
-	lw $v1, 60($sp)
-	lw $v0, 52($sp)
-	sw $v0, 0($v1)
-	lw $v1, 56($sp)
-	lw $v0, 60($sp)
-	sw $v0, 0($v1)
-	li $v1 10
-	sw $v1, 48($sp)
-	lw $v1, 56($sp)
-	lw $v0, 0($v1)
-	sw $v0, 44($sp)
-	lw $v1, 44($sp)
-	lw $v0, 0($v1)
-	sw $v0, 40($sp)
-	lw $v1, 40($sp)
-	lw $v0, 56($sp)
-	move $a0 $v0
-	lw $v0, 48($sp)
-	move $a1 $v0
-	jalr $v1
-	move $v1 $v0
-	sw $v1, 36($sp)
-	lw $v1, 36($sp)
-	move $a0 $v1
+	move $s1 $v0
+	la $s2 Fac_ComputeFac
+	sw $s2, 0($s0)
+	sw $s0, 0($s1)
+	li $s0 10
+	lw $s2, 0($s1)
+	lw $s3, 0($s2)
+	move $a0 $s1
+	move $a1 $s0
+	jalr $s3
+	move $s2 $v0
+	move $a0 $s2
 	jal _print
 	lw $ra, -4($fp)
-	addu $sp, $sp, 76
+	addu $sp, $sp, 20
 	j $ra
 	
 	.text
@@ -48,63 +31,49 @@ main:
 Fac_ComputeFac:
 	sw $fp, -8($sp)
 	move $fp, $sp
-	subu $sp, $sp, 92
+	subu $sp, $sp, 32
 	sw $ra, -4($fp)
-	sw $a0, 80($sp)
-	sw $a1, 76($sp)
-	li $v1 1
-	sw $v1, 68($sp)
-	lw $v1, 68($sp)
-	lw $v0, 76($sp)
-	move $v1 $v1
-	slt $v1, $v0, $v1
-	sw $v1, 64($sp)
-	lw $v1, 64($sp)
-	beqz $v1 L1
-	li $v1 1
-	sw $v1, 60($sp)
-	lw $v1, 60($sp)
-	move $v1 $v1
-	sw $v1, 72($sp)
+	sw $s0, 20($sp)
+	sw $s1, 16($sp)
+	sw $s2, 12($sp)
+	sw $s3, 8($sp)
+	sw $s4, 4($sp)
+	sw $s5, 0($sp)
+	move $s0 $a0
+	move $s1 $a1
+	li $s2 1
+	move $v0 $s2
+	slt $s3, $s1, $v0
+	beqz $s3 L1
+	li $s0 1
+	move $s2 $s0
 	b L2
 L1:
 	nop
-	li $v1 1
-	sw $v1, 56($sp)
-	lw $v1, 56($sp)
-	lw $v0, 76($sp)
-	move $v1 $v1
-	sub $v1, $v0, $v1
-	sw $v1, 52($sp)
-	lw $v1, 80($sp)
-	lw $v0, 0($v1)
-	sw $v0, 48($sp)
-	lw $v1, 48($sp)
-	lw $v0, 0($v1)
-	sw $v0, 44($sp)
-	lw $v1, 44($sp)
-	lw $v0, 80($sp)
-	move $a0 $v0
-	lw $v0, 52($sp)
-	move $a1 $v0
-	jalr $v1
-	move $v1 $v0
-	sw $v1, 40($sp)
-	lw $v1, 40($sp)
-	lw $v0, 76($sp)
-	move $v1 $v1
-	mul $v1, $v0, $v1
-	sw $v1, 36($sp)
-	lw $v1, 36($sp)
-	move $v1 $v1
-	sw $v1, 72($sp)
+	li $s3 1
+	move $v0 $s3
+	sub $s4, $s1, $v0
+	lw $s3, 0($s0)
+	lw $s5, 0($s3)
+	move $a0 $s0
+	move $a1 $s4
+	jalr $s5
+	move $s3 $v0
+	move $v0 $s3
+	mul $s4, $s1, $v0
+	move $s2 $s4
 L2:
 	nop
-	lw $v1, 72($sp)
-	move $v0 $v1
+	move $v0 $s2
+	lw $s0, 20($sp)
+	lw $s1, 16($sp)
+	lw $s2, 12($sp)
+	lw $s3, 8($sp)
+	lw $s4, 4($sp)
+	lw $s5, 0($sp)
 	lw $ra, -4($fp)
-	lw $fp, 84($sp)
-	addu $sp, $sp, 92
+	lw $fp, 24($sp)
+	addu $sp, $sp, 32
 	j $ra
 	
 	.text

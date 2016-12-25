@@ -22,8 +22,8 @@ public class S2K {
 		SPigletTable.DivideBasicBlock();
 		SPigletTable.LivenessAnalyze();		
 		SPigletTable.AllocateRegister();
-		SPigletTable.PrintBasicBlock();
-		SPigletTable.Print();
+		//SPigletTable.PrintBasicBlock();
+		//SPigletTable.Print();
 		ToKangaVisitor visitor1=new ToKangaVisitor();
 		root.accept(visitor1,null);		
 		java.io.PrintWriter fileWrite=new java.io.PrintWriter(args[1]);

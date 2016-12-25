@@ -181,9 +181,9 @@ public class ToKangaVisitor extends GJDepthFirst<Object,Object>
 	      for(int i=0;i<Math.min(18, procedure.NeededRegister());i++)
 	      {
 	    	  if(i<8)
-	    		  append(String.format("ASTORE SPILLEDARG %d s%d", i, i+Math.max(0, procedure.numberOfParameter-4)));
+	    		  append(String.format("ASTORE SPILLEDARG %d s%d", i+Math.max(0, procedure.numberOfParameter-4), i));
 	    	  else
-	    		  append(String.format("ASTORE SPILLEDARG %d t%d", i-8, i+Math.max(0, procedure.numberOfParameter-4)));
+	    		  append(String.format("ASTORE SPILLEDARG %d t%d", i+Math.max(0, procedure.numberOfParameter-4), i-8));
 	      }
 	      TempStorePosition storePosition;
 	      for(int i=0;i<Math.min(4, procedure.numberOfParameter);i++)

@@ -402,7 +402,7 @@ class SPigletProcedure
 	
 	public void Print()
 	{
-		System.out.println(String.format("Procedure %s, parameter %d, maxtemp %d, with %d statements",name,numberOfParameter,maxTemp,allStatement.size()));
+		System.out.println(String.format("Procedure %s, parameter %d, maxtemp %d, with %d statements, need %d registers",name,numberOfParameter,maxTemp,allStatement.size(),NeededRegister()));
 		for(SPigletStatement statement : allStatement)
 		{
 			statement.Print();
