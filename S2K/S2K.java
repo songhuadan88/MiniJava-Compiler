@@ -19,10 +19,11 @@ public class S2K {
 		BuildSymbolTableVisitor visitor=new BuildSymbolTableVisitor();		
 		root.accept(visitor,null);
 
-		//SPigletTable.Print();
 		SPigletTable.DivideBasicBlock();
-		SPigletTable.LivenessAnalyze();
+		SPigletTable.LivenessAnalyze();		
+		SPigletTable.AllocateRegister();
 		SPigletTable.PrintBasicBlock();
+		SPigletTable.Print();
 		ToKangaVisitor visitor1=new ToKangaVisitor();
 		root.accept(visitor1,null);		
 		java.io.PrintWriter fileWrite=new java.io.PrintWriter(args[1]);

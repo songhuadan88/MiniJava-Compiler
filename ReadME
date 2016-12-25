@@ -1,9 +1,6 @@
 This is a repository for MiniJava compiler.
 
 
-Register Dispatch
-Convert To Kanga
-
 Grammar on MiniJava:
 There is only one function in the MainClass.
 There are only four types, int bool int[] Object, except the main function.

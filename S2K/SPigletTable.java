@@ -1,8 +1,10 @@
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.TreeSet;
@@ -29,6 +31,14 @@ public class SPigletTable {
 		for(SPigletProcedure procedure : allProcedure)
 		{
 			procedure.LivenessAnalyze();
+		}
+	}
+	
+	static void AllocateRegister()
+	{
+		for(SPigletProcedure procedure : allProcedure)
+		{
+			procedure.AllocateRegister();
 		}
 	}
 	
@@ -183,7 +193,7 @@ class SPigletProcedure
 					if(block.USE.contains(temp) || block.DEF.contains(temp))
 						continue;
 					block.USE.add(temp);
-				}				
+				}
 			}
 			changed.add(block);
 		}
@@ -207,18 +217,186 @@ class SPigletProcedure
 				}
 			}
 		}
+		
+		// analyze for each statement
+		for(SPigletBasicBlock block : allBasicBlock)
+		{
+			if(block.isExitBlock)
+				continue;
+			for(int i=block.endIndex;i>=block.startIndex;i--)
+			{
+				SPigletStatement statement=allStatement.get(i);
+				statement.OUT=new HashSet<Integer>(i==block.endIndex?block.OUT:allStatement.get(i+1).IN);
+				statement.IN=new HashSet<Integer>(statement.OUT);
+				statement.IN.removeAll(statement.assignedTemp);
+				statement.IN.addAll(statement.accessedTemp);				
+			}
+		}
+	}
+
+	// return the first available register position for all the current registers
+	private static int AvailableRegister(List<Map<Integer,Integer>> allRegister)
+	{
+		int ret=0;
+		boolean flag=true;
+		while(flag)
+		{
+			flag=false;
+			for(Map<Integer,Integer> register: allRegister)
+			{
+				if(register.containsValue(ret))
+				{
+					ret++;
+					flag=true;
+				}
+			}
+		}
+		return ret;
+	}
+	
+	public void AllocateRegister()
+	{
+		for(SPigletBasicBlock block : allBasicBlock)
+		{
+			if(block.isExitBlock)
+				continue;
+			for(Integer temp : block.IN)
+			{
+				if(block.INregister.containsKey(temp))
+					continue;
+				List<Map<Integer,Integer>> allRegister=new ArrayList<Map<Integer,Integer>>();
+				List<Map<Integer,Integer>> allRegisterForAvailiable=new ArrayList<Map<Integer,Integer>>();
+				for(SPigletBasicBlock b : allBasicBlock)
+				{
+					if(b.isExitBlock)
+						continue;
+					if(b.IN.contains(temp))
+						allRegister.add(b.INregister);
+					if(b.OUT.contains(temp))
+						allRegister.add(b.OUTregister);
+					if(b.IN.contains(temp) || b.OUT.contains(temp))
+					{
+						allRegisterForAvailiable.add(b.INregister);
+						allRegisterForAvailiable.add(b.OUTregister);
+					}
+				}
+				int r=AvailableRegister(allRegisterForAvailiable);
+				for(Map<Integer,Integer> register: allRegister)
+				{
+					register.put(temp, r);
+				}
+			}
+			for(Integer temp : block.OUT)
+			{
+				if(block.OUTregister.containsKey(temp))
+					continue;
+				List<Map<Integer,Integer>> allRegister=new ArrayList<Map<Integer,Integer>>();
+				List<Map<Integer,Integer>> allRegisterForAvailiable=new ArrayList<Map<Integer,Integer>>();
+				for(SPigletBasicBlock b : allBasicBlock)
+				{
+					if(b.isExitBlock)
+						continue;
+					if(b.IN.contains(temp))
+						allRegister.add(b.INregister);
+					if(b.OUT.contains(temp))
+						allRegister.add(b.OUTregister);
+					if(b.IN.contains(temp) || b.OUT.contains(temp))
+					{
+						allRegisterForAvailiable.add(b.INregister);
+						allRegisterForAvailiable.add(b.OUTregister);
+					}
+				}
+				int r=AvailableRegister(allRegisterForAvailiable);
+				for(Map<Integer,Integer> register: allRegister)
+				{
+					register.put(temp, r);
+				}
+			}
+		}
+		
+		// allocate register for statements
+		for(SPigletBasicBlock block : allBasicBlock)
+		{
+			if(block.isExitBlock)
+				continue;
+			// IN already, insert assign and access, save to statement register, delete to OUT
+			Map<Integer,Integer> current=new HashMap<Integer,Integer>(block.INregister);
+			List<Map<Integer,Integer>> allRegisterForAvailiable=new ArrayList<Map<Integer,Integer>>();
+			allRegisterForAvailiable.add(block.INregister);
+			allRegisterForAvailiable.add(block.OUTregister);
+			allRegisterForAvailiable.add(current);
+			for(int i=block.startIndex;i<=block.endIndex;i++)
+			{
+				SPigletStatement statement=allStatement.get(i);				
+				for(Integer temp : statement.assignedTemp)
+				{
+					if(current.containsKey(temp))
+						continue;
+					int r=AvailableRegister(allRegisterForAvailiable);
+					if(block.INregister.containsKey(temp))
+						r=block.INregister.get(temp);
+					if(block.OUTregister.containsKey(temp))
+						r=block.OUTregister.get(temp);
+					current.put(temp, r);
+				}
+				for(Integer temp : statement.accessedTemp)
+				{
+					if(current.containsKey(temp))
+						continue;
+					int r=AvailableRegister(allRegisterForAvailiable);
+					if(block.INregister.containsKey(temp))
+						r=block.INregister.get(temp);
+					if(block.OUTregister.containsKey(temp))
+						r=block.OUTregister.get(temp);
+					current.put(temp, r);
+				}
+				statement.register = new HashMap<Integer,Integer>(current);
+				Set<Integer> keys = new HashSet<Integer>(current.keySet());
+				for(Integer key : keys)
+				{
+					if(!statement.OUT.contains(key))
+						current.remove(key);
+				}
+			}
+			
+		}
+	}
+	
+	public int NeededRegister()
+	{
+		int maxRegister=-1;
+		for(SPigletStatement statement : allStatement)
+		{
+			for(Integer r : statement.register.values())
+			{
+				maxRegister=Math.max(maxRegister, r);
+			}
+		}
+		return maxRegister + 1;
 	}
 	
 	public int NeededStackSpace() 
-	{
-		return maxTemp+10;	
+	{		
+		return Math.max(0, numberOfParameter-4) + NeededRegister();	
 	}
 	
 	public TempStorePosition GetStorePosition(int tempIndex, int statementIndex)
 	{
+		Map<Integer,Integer> register=allStatement.get(statementIndex).register;
+		if(!register.containsKey(tempIndex))
+			return null;
+		int r=register.get(tempIndex);
 		TempStorePosition storePosition=new TempStorePosition();
-		storePosition.type=StorePositionType.STACK;
-		storePosition.stackIndex=tempIndex;
+		if(r<18)
+		{
+			storePosition.type=StorePositionType.REGISTER;
+			storePosition.registerName=(r<8?"s"+r:"t"+(r-8));
+		}
+		else
+		{
+			storePosition.type=StorePositionType.STACK;
+			storePosition.stackIndex=Math.max(0, numberOfParameter-4) + r;
+		}
 		return storePosition;
 	}
 	
@@ -250,6 +428,7 @@ class SPigletBasicBlock
 	List<SPigletBasicBlock> childrenBlock=new ArrayList<SPigletBasicBlock>();
 	List<SPigletBasicBlock> parentBlock=new ArrayList<SPigletBasicBlock>();
 	Set<Integer> IN,OUT,USE,DEF;
+	Map<Integer,Integer> INregister=new HashMap<Integer,Integer>(),OUTregister=new HashMap<Integer,Integer>();
 	
 	public SPigletBasicBlock(SPigletProcedure procedure)
 	{
@@ -301,6 +480,8 @@ class SPigletBasicBlock
 		System.out.println("\tDEF: "+DEF.toString());
 		System.out.println("\tIN: "+IN.toString());
 		System.out.println("\tOUT: "+OUT.toString());
+		System.out.println("\tINregister: "+INregister.toString());
+		System.out.println("\tOUTregister: "+OUTregister.toString());
 	}
 }
 
@@ -312,8 +493,11 @@ class SPigletStatement
 	boolean mustJump=false;
 	String jumpToLabel="";
 	
-	List<Integer> assignedTemp=new ArrayList<Integer>();
-	List<Integer> accessedTemp=new ArrayList<Integer>();
+	Set<Integer> assignedTemp=new HashSet<Integer>();
+	Set<Integer> accessedTemp=new HashSet<Integer>();
+	Set<Integer> IN;
+	Set<Integer> OUT;
+	Map<Integer,Integer> register;
 	
 	public void Print()
 	{
@@ -329,7 +513,10 @@ class SPigletStatement
 			System.out.print(" Will not jump.");
 		System.out.print(" Accessed: "+accessedTemp.toString());
 		System.out.print(" Assigned: "+assignedTemp.toString());
+		System.out.print(" IN: "+IN.toString());
+		System.out.print(" OUT: "+OUT.toString());
 		System.out.println();
+		System.out.println("\tRegister: "+register.toString());
 	}
 	
 }

@@ -96,8 +96,10 @@ public class ToKangaVisitor extends GJDepthFirst<Object,Object>
 		   }
 
 		   public Object visit(NodeSequence n, Object argu) {		
-		      int _count=0;
-		      for ( Enumeration<Node> e = n.elements(); e.hasMoreElements(); ) {
+		      Object _ret=null;
+			   int _count=0;
+		      for ( Enumeration<Node> e = n.elements(); e.hasMoreElements(); ) 
+		      {
 		         if(_count==0)
 		         {
 		    	   String label = (String)e.nextElement().accept(this,argu);
@@ -107,10 +109,10 @@ public class ToKangaVisitor extends GJDepthFirst<Object,Object>
 		    	   }
 		         }
 		         else
-		        	 e.nextElement().accept(this,argu);
+		        	 _ret = e.nextElement().accept(this,argu);
 		         _count++;
 		      }
-		      return null;
+		      return _ret;
 		   }
 
 	String GetExpressionStringForTemp(ProcedureArgument procedureArgu, int tempIndex, String preferredReg)
@@ -176,16 +178,45 @@ public class ToKangaVisitor extends GJDepthFirst<Object,Object>
 	      append(String.format("%s [%d][%d][%d]",procedureName,procedure.numberOfParameter,procedure.NeededStackSpace(),SPigletTable.MaximumOfProcedureParameter()));
 	      currentTab++;
 	      
-	      for(int i=4;i<procedure.numberOfParameter;i++)
+	      for(int i=0;i<Math.min(18, procedure.NeededRegister());i++)
 	      {
-	    	  append(String.format("ALOAD v0 SPILLEDARG %d",i-4));
-	    	  append(String.format("ASTORE SPILLEDARG %d v0",i));
+	    	  if(i<8)
+	    		  append(String.format("ASTORE SPILLEDARG %d s%d", i, i+Math.max(0, procedure.numberOfParameter-4)));
+	    	  else
+	    		  append(String.format("ASTORE SPILLEDARG %d t%d", i-8, i+Math.max(0, procedure.numberOfParameter-4)));
 	      }
-	      for(int i=0;i<Math.min(4,procedure.numberOfParameter);i++)
+	      TempStorePosition storePosition;
+	      for(int i=0;i<Math.min(4, procedure.numberOfParameter);i++)
 	      {
-	    	  append(String.format("ASTORE SPILLEDARG %d a%d",i,i));
+	    	  storePosition=procedure.GetStorePosition(i,0); 
+	    	  if(storePosition==null)
+	    		  continue;
+	      	  if(storePosition.type==StorePositionType.REGISTER)
+	      		  append(String.format("MOVE %s a%d", storePosition.registerName, i));
+	      	  else	      	 
+	      		  append(String.format("ASTORE SPILLEDARG %d a%d", i, storePosition.stackIndex));	      			      	  
+	      }
+	      for(int i=4;i<Math.max(4, procedure.numberOfParameter);i++)
+	      {
+	    	  storePosition=procedure.GetStorePosition(i,0); 
+	    	  if(storePosition==null)
+	    		  continue;
+	      	  if(storePosition.type==StorePositionType.REGISTER)
+	      		  append(String.format("ALOAD %s SPILLEDARG %d", storePosition.registerName, i-4));
+	      	  else	      	 
+	      	  {
+	      		  append(String.format("ALOAD %s SPILLEDARG %d", "v1", i-4));
+	      		  append(String.format("ASTORE SPILLEDARG %d %s", "v1", storePosition.stackIndex));
+	      	  }
 	      }
 	      n.f4.accept(this, procedureArgu);
+	      for(int i=0;i<Math.min(18, procedure.NeededRegister());i++)
+	      {
+	    	  if(i<8)
+	    		  append(String.format("ALOAD s%d SPILLEDARG %d", i, i+Math.max(0, procedure.numberOfParameter-4)));
+	    	  else
+	    		  append(String.format("ALOAD t%d SPILLEDARG %d", i-8, i+Math.max(0, procedure.numberOfParameter-4)));
+	      }
 	      currentTab--;
 	      append("END");
 	      return _ret;
@@ -201,10 +232,9 @@ public class ToKangaVisitor extends GJDepthFirst<Object,Object>
 	    *       | MoveStmt()
 	    *       | PrintStmt()
 	    */
-	   public Object visit(Stmt n, Object argu) {
-	      Object _ret=null;
+	   public Object visit(Stmt n, Object argu) {	      
 	      n.f0.accept(this, argu);
-	      return _ret;
+	      return new SPigletStatement();
 	   }
 
 	   /**
