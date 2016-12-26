@@ -29,7 +29,7 @@ public class S2K {
 		java.io.PrintWriter fileWrite=new java.io.PrintWriter(args[1]);
 		fileWrite.println(visitor1.kangaString);
 		fileWrite.close();
-				
+
 		//System.out.println("OK");
 	}
 

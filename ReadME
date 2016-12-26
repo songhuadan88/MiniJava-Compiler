@@ -1,7 +1,5 @@
 This is a repository for MiniJava compiler.
 
-Check MIPS right?
-
 Grammar on MiniJava:
 There is only one function in the MainClass.
 There are only four types, int bool int[] Object, except the main function.
@@ -46,6 +44,21 @@ the first is the number of parameters
 the second is the maximum of numbers that the procedure may use the stack
 the third is the maximum of numbers of parameters of the producers that this producer may call
 
+
+Register Allocation in SPiglet to Kanga:
+First divide basic block and acquire their parent relations.
+Then, analyze liveness for each block.
+We first get USE set and DEF set intuitively from the statements,
+and then calculate IN set and OUT set from them, recursively, through the formulae
+IN=(OUT-DEF)U(USE).
+Inside a basic block, the same analysis is put on each statement.
+At last, allocate register for each temp variable.
+We first deal with those temp variables which are live across different basic block.
+For these temp variables, a fixed position should be assigned to each variable.
+Then inside a basic block, we analyze liveness for each statement and allocate
+registers if essential. However, we should notice that the temp variables
+and their register have been fixed in the former steps, so the newly allocated
+register in this step should not conflict with them.
 
 NodeListOptional corresponds to the * in the BNF.
 
